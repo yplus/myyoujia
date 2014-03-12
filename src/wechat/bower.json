@@ -1,0 +1,9 @@
+{
+    "name": "yojia-wechat",
+    "version": "1.0.0",
+    "dependencies": {
+        "zepto": null,
+        "underscore": null,
+        "requirejs": null
+    }
+}
