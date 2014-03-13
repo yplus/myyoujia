@@ -19,8 +19,3 @@ results
 
 npm-debug.log
 node_modules
-
-### js
-
-vendor/
-!vendor/avos/

@@ -1,5 +1,7 @@
-Zepto(function($){
+(function() {
 
-    
+    $('#myModalButton').show();
 
-});
+    new app.AppRouter;
+})();
+
