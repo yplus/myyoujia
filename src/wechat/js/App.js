@@ -1,3 +1,5 @@
+moment.lang("zh-cn");
+
 var app = app || {};
 app.Backend = Parse;
 app.Backend.$ = jQuery;

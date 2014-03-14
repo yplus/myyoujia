@@ -12,7 +12,6 @@ app.AppRouter = app.Backend.Router.extend({
 
     my: function() {
         new app.MyView();
-        this.navigate("my");
     },
 
     meal: function() {
