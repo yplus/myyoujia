@@ -1,10 +1,9 @@
-app.MealView = app.Backend.View.extend({
+app.RepairView = app.Backend.View.extend({
 
     el: '#app',
 
-    template: _.template($('#meal-view-template').html()),
-    title: "搭伙饭预订",
-
+    template: _.template($('#repair-view-template').html()),
+    title: "维修预约",
     events: {
         'click .submit-button': 'submit',
         'click .cancel-button': 'cancel',

@@ -11,17 +11,20 @@ app.AppRouter = app.Backend.Router.extend({
     },
 
     my: function() {
-        new app.MyView;
+        var v = new app.MyView;
+        document.title = v.title;
     },
 
     meal: function() {
-        new app.MealView;
+        var v = new app.MealView;
+        document.title = v.title;
     },
 
     repair: function() {
     },
 
     clean: function() {
-
+        var v = new app.CleanView;
+        document.title = v.title;
     }
 });

@@ -3,7 +3,7 @@ app.MyView = app.Backend.View.extend({
     el: '#app',
 
     template: _.template($('#my-view-template').html()),
-
+    title: "我的YOU+",
     events: {
         'click .checkout-button': 'checkout'
     },
