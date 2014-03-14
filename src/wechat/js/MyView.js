@@ -5,14 +5,12 @@ app.MyView = app.Backend.View.extend({
     template: _.template($('#my-view-template').html()),
 
     events: {
-        'touchend .checkout': 'checkout'
+        'click .checkout-button': 'checkout'
     },
 
     initialize: function(){
-
-        var d = new Date;
         var vars = {
-            welcome: d.getHours()<18 ? (d.getHours()<12?"早上好！":"下午好!"):"晚上好！",
+            welcome: moment().hour()<18 ? (moment().hour()<12?"早上好！":"下午好!"):"晚上好！",
             name: "张三",
             room: "401",
             rent: 2300.0,

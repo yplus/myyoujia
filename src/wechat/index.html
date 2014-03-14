@@ -44,7 +44,28 @@
                 <div class="checkout-confirm hidden">您的退房申请已经提交，管家将于近期联系您。</div>
             </div>
         </script>
-
+        <script type="text/template" id="meal-view-template">
+            <div class="meal-reserve">
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-primary">
+                    <input type="radio" name="options" id="option1" value="1">一份
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="options" id="option2" value="2">俩份
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="options" id="option3" value="3">叁份
+                  </label>
+                </div>
+                <button type="button" class="submit-button">预约</button>
+                <p>请在用餐前到管家部缴费</p>
+            </div>
+            <div class="meal-confirm hidden">
+                <p>您已成功预约<%= meal_count %>份今天的搭伙饭！</p>
+                <p>请在用餐前到管家部缴费</p>
+                <button type="button" class="cancel-button">取消预约</button>
+            </div>
+        </script>
 
         <script src="vendor/jquery/dist/jquery.min.js"></script>
         <script src="vendor/underscore-amd/underscore-min.js"></script>
@@ -53,6 +74,7 @@
         <script src="vendor/momentjs/min/moment-with-langs.min.js"></script>
         <script src="js/App.js"></script>
         <script src="js/MyView.js"></script>
+        <script src="js/MealView.js"></script>
         <script src="js/AppRouter.js"></script>
         <script src="js/main.js"></script>
     </body>
