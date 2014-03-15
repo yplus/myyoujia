@@ -21,81 +21,75 @@
         <![endif]-->
         <!-- Add your site or application content here -->
 
-        <div id="app" class="container"></div>
+        <div id="app" class="container-fluid"></div>
         <div id="footer">
-        <div class="container">
-            <p class="text-muted">YOU+国际青年公寓</p>
-        </div>
+            <div class="container">
+                <p class="text-muted">YOU+国际青年公寓</p>
+            </div>
         </div>
 
         <script type="text/template" id="my-view-template">
-            <p><%= welcome %> <%= name %></p>
-            <div class="info-group">
-                租赁信息
-                <ul>
-                <li>房间号：<span class="val"><%= room %></span></li>
-                <li>房租： <span class="val"><%= rent %> /月</span></li>
-                <li>形式：<span class="val"><%= payByStr %></li>
-                <li>物业：<span class="val"><%= service %></li>
-                <li>水电：<span class="val"><%= utility %></li>
-                </ul>
-                <p>欠费总计：<span class="total"><%= totalDue %></li>
-                <p>最后缴费日期：<span class="due"><%= dateDue %></li>
+            <nav class="edge-box navbar navbar-default navbar-fixed-top" role="navigation">
+                <div class="container-fluid">
+                    <span class="navbar-left pull-left navbar-text"><%= welcome %> <%= name %></span>
+                    <button type="button" class="btn btn-default navbar-btn navbar-right pull-right">剩余信用 <span class="badge"><%= karma %></span></button>
+                </div>
+            </nav>
+            <div class="edge-box">
+                <table class="table">
+                    <tr class="active"><td class="text-right">房间号</td><td><%= room %></td></tr>
+                    <tr><td class="text-right">租期开始</td><td><%= firstDay %></td></tr>
+                    <tr><td class="text-right">租期结束</td><td><%= lastDay %></td></tr>
+                    <tr><td class="text-right">房租</td><td><%= rent %></td></tr>
+                    <tr><td class="text-right">形式</td><td><%= payByStr %></td></tr>
+                    <tr><td class="text-right">物业</td><td><%= service %></td></tr>
+                    <tr><td class="text-right">水电</td><td><%= utility %></td></tr>
+                    <tr class="active"><td class="text-right">欠费总计</td><td><strong><span class="total"><%= totalDue %></strong></td></tr>
+                    <tr class="danger"><td class="text-right">最后缴费日期</td><td><strong><span class="due"><%= dateDue %></strong></td></tr>
+                </table>
             </div>
             <div class="info-group">
-                信用信息
-                <p>Karma: <span class="val"><%= karma %></span></p>
-            </div>
-            <div class="info-group">
-                <p>租期 <span class="val"><%= firstDay %> - <%= lastDay %></span></p>
-                <button type="button" class="checkout-button">退房申请</button>
+                <button type="button" class="checkout-button btn-lg btn-warning btn-block">退房申请</button>
                 <div class="checkout-confirm hidden">您的退房申请已经提交，管家将于近期联系您。</div>
             </div>
         </script>
         <script type="text/template" id="meal-view-template">
-            <div class="meal-reserve">
-                <div class="btn-group" data-toggle="buttons">
-                  <label class="btn btn-primary">
-                    <input type="radio" name="options" id="option1" value="1">一份
-                  </label>
-                  <label class="btn btn-primary">
-                    <input type="radio" name="options" id="option2" value="2">俩份
-                  </label>
-                  <label class="btn btn-primary">
-                    <input type="radio" name="options" id="option3" value="3">叁份
-                  </label>
+            <div class="reserve">
+                <div class="form-group">
+                    <div class="btn-group" data-toggle="buttons">
+                      <label class="btn btn-default"><input type="radio" name="options" id="option1" value="1">一份</label>
+                      <label class="btn btn-default"><input type="radio" name="options" id="option2" value="2">俩份</label>
+                      <label class="btn btn-default"><input type="radio" name="options" id="option3" value="3">叁份</label>
+                    </div>
                 </div>
                 <button type="button" class="submit-button btn btn-lg btn-primary btn-block">预约</button>
-                <p>请在用餐前到管家部缴费</p>
+                <p class="help-block">请在用餐前到管家部缴费</p>
             </div>
-            <div class="meal-confirm hidden">
-                <p>您已成功预约<%= meal_count %>份今天的搭伙饭！</p>
-                <p>请在用餐前到管家部缴费</p>
-                <button type="button" class="cancel-button">取消预约</button>
+            <div class="confirm hidden">
+                <p class="lead">您已成功预约<strong><%= meal_count %>份</strong>今天的搭伙饭！</p>
+                <button type="button" class="cancel-button btn-lg btn-warning btn-block">取消预约</button>
             </div>
         </script>
         <script type="text/template" id="clean-view-template">
-            <div class="clean-reserve">
-                <label>请选择保洁上门的日期：</label>
-                <input readonly class="datepicker">
-                <label>请选择时间段：</label>
-                <div class="btn-group" data-toggle="buttons">
-                      <label class="btn btn-primary">
-                        <input type="radio" name="timeslots" id="option1" value="上午">上午
-                      </label>
-                      <label class="btn btn-primary">
-                        <input type="radio" name="timeslots" id="option2" value="下午">下午
-                      </label>
-                      <label class="btn btn-primary">
-                        <input type="radio" name="timeslots" id="option3" value="晚间">晚间
-                      </label>
+            <div class="reserve">
+                <div class="form-group">
+                    <label for="day">请选择上门的日期：</label>
+                    <input readonly class="datepicker form-control" id="day">
+                </div>
+                <div class="form-group">
+                    <label>请选择时间段：</label>
+                    <div class="btn-group" data-toggle="buttons">
+                        <label class="btn btn-default"><input class="form-control" type="radio" name="timeslots" id="timeslot1" value="上午">上午</label>
+                        <label class="btn btn-default"><input class="form-control" type="radio" name="timeslots" id="timeslot2" value="下午">下午</label>
+                        <label class="btn btn-default"><input class="form-control" type="radio" name="timeslots" id="timeslot3" value="晚间">晚间</label>
                     </div>
+                </div>
                 <button type="button" class="submit-button btn btn-lg btn-primary btn-block">预约</button>
             </div>
-            <div class="clean-confirm hidden">
-                <p>您已成功预约保洁！</p>
-                <p>请在<%= day %> <%= time %>保证家中有人</p>
-                <button type="button" class="cancel-button">取消预约</button>
+            <div class="confirm hidden">
+                <p class="lead">您已成功预约保洁！</p>
+                <p class="lead">请在<strong><%= day %><%= time %></strong>保证家中有人</p>
+                <button type="button" class="cancel-button btn-lg btn-warning btn-block">取消预约</button>
             </div>
         </script>
         <script type="text/template" id="repair-view-template">
@@ -120,16 +114,16 @@
                 <div class="form-group">
                     <label>请选择时间段：</label>
                     <div class="btn-group" data-toggle="buttons">
-                        <label class="btn btn-primary" for="timeslot1"><input class="form-control" type="radio" name="timeslots" id="timeslot1" value="上午">上午</label>
-                        <label class="btn btn-primary" for="timeslot2"><input class="form-control" type="radio" name="timeslots" id="timeslot2" value="下午">下午</label>
-                        <label class="btn btn-primary" for="timeslot3"><input class="form-control" type="radio" name="timeslots" id="timeslot3" value="晚间">晚间</label>
+                        <label class="btn btn-default"><input class="form-control" type="radio" name="timeslots" id="timeslot1" value="上午">上午</label>
+                        <label class="btn btn-default"><input class="form-control" type="radio" name="timeslots" id="timeslot2" value="下午">下午</label>
+                        <label class="btn btn-default"><input class="form-control" type="radio" name="timeslots" id="timeslot3" value="晚间">晚间</label>
                     </div>
                 </div>
-                <button type="button" class="submit-button btn btn-lg btn-primary btn-block" type="submit">预约</button>
+                <button type="button" class="submit-button btn btn-lg btn-primary btn-block">预约</button>
             </div>
             <div class="confirm hidden">
-                <p>您已成功预约维修！</p>
-                <p>请在<%= day %> <%= time %>保证家中有人</p>
+                <p class="lead">您已成功预约维修！</p>
+                <p class="lead">请在<strong><%= day %><%= time %></strong>保证家中有人</p>
                 <button type="button" class="cancel-button btn-lg btn-warning btn-block">取消预约</button>
             </div>
         </script>

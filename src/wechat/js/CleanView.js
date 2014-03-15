@@ -41,15 +41,15 @@ app.CleanView = app.Backend.View.extend({
         console.log(this.time);
         
         this.render();
-        this.$(".clean-reserve").toggleClass('hidden', true);
-        this.$(".clean-confirm").toggleClass('hidden', false);
+        this.$(".reserve").toggleClass('hidden', true);
+        this.$(".confirm").toggleClass('hidden', false);
     },
 
     cancel: function(){
         this.render();
         this.day = "";
         this.time = "";
-        this.$(".clean-reserve").toggleClass('hidden', false);
-        this.$(".clean-confirm").toggleClass('hidden', true);  
+        this.$(".reserve").toggleClass('hidden', false);
+        this.$(".confirm").toggleClass('hidden', true);  
     }
 })

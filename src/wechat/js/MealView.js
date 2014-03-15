@@ -28,14 +28,14 @@ app.MealView = app.Backend.View.extend({
 
     submit: function(){
         this.render();
-        this.$(".meal-reserve").toggleClass('hidden', true);
-        this.$(".meal-confirm").toggleClass('hidden', false);
+        this.$(".reserve").toggleClass('hidden', true);
+        this.$(".confirm").toggleClass('hidden', false);
     },
 
     cancel: function(){
         this.render();
         this.meal_count = $('input[name=options]:checked').val();
-        this.$(".meal-reserve").toggleClass('hidden', false);
-        this.$(".meal-confirm").toggleClass('hidden', true);  
+        this.$(".reserve").toggleClass('hidden', false);
+        this.$(".confirm").toggleClass('hidden', true);  
     }
 })
