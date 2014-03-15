@@ -18,7 +18,7 @@ app.MealView = app.Backend.View.extend({
     },
 
     render: function(){
-        this.$el.html(this.template({meal_count:this.meal_count}));
+        this.$el.html(this.template({meal_count:this.meal_count, title:this.title}));
         return this;
     },
 

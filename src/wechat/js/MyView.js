@@ -10,6 +10,7 @@ app.MyView = app.Backend.View.extend({
 
     initialize: function(){
         var vars = {
+            title:this.title,
             welcome: moment().hour()<18 ? (moment().hour()<12?"早上好！":"下午好!"):"晚上好！",
             name: "张三",
             room: "401",

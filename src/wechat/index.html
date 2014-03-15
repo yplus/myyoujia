@@ -20,8 +20,13 @@
             <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
         <!-- Add your site or application content here -->
-        
+
         <div id="app" class="container"></div>
+        <div id="footer">
+        <div class="container">
+            <p class="text-muted">YOU+国际青年公寓</p>
+        </div>
+        </div>
 
         <script type="text/template" id="my-view-template">
             <p><%= welcome %> <%= name %></p>
@@ -60,7 +65,7 @@
                     <input type="radio" name="options" id="option3" value="3">叁份
                   </label>
                 </div>
-                <button type="button" class="submit-button">预约</button>
+                <button type="button" class="submit-button btn btn-lg btn-primary btn-block">预约</button>
                 <p>请在用餐前到管家部缴费</p>
             </div>
             <div class="meal-confirm hidden">
@@ -85,7 +90,7 @@
                         <input type="radio" name="timeslots" id="option3" value="晚间">晚间
                       </label>
                     </div>
-                <button type="button" class="submit-button">预约</button>
+                <button type="button" class="submit-button btn btn-lg btn-primary btn-block">预约</button>
             </div>
             <div class="clean-confirm hidden">
                 <p>您已成功预约保洁！</p>
@@ -95,35 +100,37 @@
         </script>
         <script type="text/template" id="repair-view-template">
             <div class="reserve">
-                请描述并提交维修预约，<br/>
-                管家部会第一时间联系您！
-                <select class="form-control" id="problem">
-                    <option>电</option>
-                    <option>下水</option>
-                    <option>空调</option>
-                    <option>家具</option>
-                </select>
-                <textarea class="form-control" rows="3" placeholder="请描述您的问题" id="description"></textarea>
-                <label>请选择上门的日期：</label>
-                <input readonly class="datepicker">
-                <label>请选择时间段：</label>
-                <div class="btn-group" data-toggle="buttons">
-                      <label class="btn btn-primary">
-                        <input type="radio" name="timeslots" id="option1" value="上午">上午
-                      </label>
-                      <label class="btn btn-primary">
-                        <input type="radio" name="timeslots" id="option2" value="下午">下午
-                      </label>
-                      <label class="btn btn-primary">
-                        <input type="radio" name="timeslots" id="option3" value="晚间">晚间
-                      </label>
+                <div class="form-group">
+                    <label for="problem">哪里出了问题：</label>
+                    <select class="form-control" id="problem">
+                        <option>电</option>
+                        <option>下水</option>
+                        <option>空调</option>
+                        <option>家具</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="description">请大致描述您的问题：</label>
+                    <textarea class="form-control" rows="2" id="description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="day">请选择上门的日期：</label>
+                    <input readonly class="datepicker form-control" id="day">
+                </div>
+                <div class="form-group">
+                    <label>请选择时间段：</label>
+                    <div class="btn-group" data-toggle="buttons">
+                        <label class="btn btn-primary" for="timeslot1"><input class="form-control" type="radio" name="timeslots" id="timeslot1" value="上午">上午</label>
+                        <label class="btn btn-primary" for="timeslot2"><input class="form-control" type="radio" name="timeslots" id="timeslot2" value="下午">下午</label>
+                        <label class="btn btn-primary" for="timeslot3"><input class="form-control" type="radio" name="timeslots" id="timeslot3" value="晚间">晚间</label>
                     </div>
-                <button type="button" class="submit-button">预约</button>
+                </div>
+                <button type="button" class="submit-button btn btn-lg btn-primary btn-block" type="submit">预约</button>
             </div>
             <div class="confirm hidden">
                 <p>您已成功预约维修！</p>
                 <p>请在<%= day %> <%= time %>保证家中有人</p>
-                <button type="button" class="cancel-button">取消预约</button>
+                <button type="button" class="cancel-button btn-lg btn-warning btn-block">取消预约</button>
             </div>
         </script>
         <script src="vendor/jquery/dist/jquery.min.js"></script>

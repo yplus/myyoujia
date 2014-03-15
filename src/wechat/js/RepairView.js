@@ -16,7 +16,7 @@ app.RepairView = app.Backend.View.extend({
     },
 
     render: function(){
-        this.$el.html(this.template({day:this.day, time:this.time}));
+        this.$el.html(this.template({day:this.day, time:this.time, title:this.title}));
         this.$day = this.$('.datepicker');
         return this;
     },
