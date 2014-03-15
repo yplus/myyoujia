@@ -2,6 +2,6 @@
 
     $('#myModalButton').show();
 
-    new app.AppRouter;
+    app.router = new app.AppRouter;
 })();
 

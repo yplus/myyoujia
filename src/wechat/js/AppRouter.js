@@ -3,7 +3,8 @@ app.AppRouter = app.Backend.Router.extend({
         "my": "my",
         "meal": "meal",
         "repair": "repair",
-        "clean": "clean"
+        "clean": "clean",
+        "reserve": "reserve"
     },
 
     initialize: function(options) {
@@ -12,6 +13,11 @@ app.AppRouter = app.Backend.Router.extend({
 
     my: function() {
         var v = new app.MyView;
+        document.title = v.title;
+    },
+
+    reserve: function() {
+        var v = new app.ReserveView;
         document.title = v.title;
     },
 
