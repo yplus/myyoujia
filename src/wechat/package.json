@@ -1,0 +1,12 @@
+{
+  "name": "myyoujia",
+  "version": "0.0.1",
+  "private": true,
+  "author": "L",
+  "dependencies": {
+    "cheerio": "~0.13.1",
+    "uglifycss": "0.0.8",
+    "uglify-js": "~2.4.13",
+    "html-minifier": "~0.5.6"
+  }
+}

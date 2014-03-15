@@ -1,5 +1,3 @@
-
-
 JS_SOURCES = 	vendor/jquery/dist/jquery.min.js \
 				vendor/underscore-amd/underscore-min.js \
 				vendor/bootstrap/dist/js/bootstrap.min.js \
@@ -13,6 +11,7 @@ JS_SOURCES = 	vendor/jquery/dist/jquery.min.js \
 				js/MealView.js \
 				js/CleanView.js \
 				js/RepairView.js \
+				js/ReserveView.js \
 				js/AppRouter.js \
 				js/main.js
 
@@ -22,6 +21,8 @@ CSS_SOURCES = 	vendor/bootstrap/dist/css/bootstrap.min.css \
 				vendor/pickadate/lib/themes/default.time.css \
 				css/main.css
 
+BIN = node_modules/.bin
+
 DIST = ../../bin/my.youplus.cc
 
 PRODUCTION = root@162.243.137.244:/home/www
@@ -29,14 +30,13 @@ PRODUCTION = root@162.243.137.244:/home/www
 all: $(DIST)/index.html $(DIST)/app.js $(DIST)/app.css
 
 $(DIST)/app.js: $(JS_SOURCES)
-	uglifyjs $^ -o $@
+	$(BIN)/uglifyjs $^ -o $@
 
 $(DIST)/app.css: $(CSS_SOURCES)
-	uglifycss $^ > $@
+	$(BIN)/uglifycss $^ > $@
 
 $(DIST)/index.html: index.html
-# should modify to use app.js and app.css only
-	cp index.html $(DIST)/
+	node optimize.js $^ > $@
 
 clean:
 	rm -rf $(DIST)/*

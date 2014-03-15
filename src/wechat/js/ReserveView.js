@@ -22,10 +22,10 @@ app.ReserveView = app.Backend.View.extend({
     },
 
     gotoClean: function(e) {
-        app.Backend.history.navigate("clean", {trigger:true});
+        app.router.navigate("clean", {trigger:true});
     },
 
     gotoRepair: function(e) {
-        app.Backend.history.navigate("repair", {trigger:true});
+        app.router.navigate("repair", {trigger:true});
     }
 })
