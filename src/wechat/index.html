@@ -93,6 +93,39 @@
                 <button type="button" class="cancel-button">取消预约</button>
             </div>
         </script>
+        <script type="text/template" id="repair-view-template">
+            <div class="reserve">
+                请描述并提交维修预约，<br/>
+                管家部会第一时间联系您！
+                <select class="form-control" id="problem">
+                    <option>电</option>
+                    <option>下水</option>
+                    <option>空调</option>
+                    <option>家具</option>
+                </select>
+                <textarea class="form-control" rows="3" placeholder="请描述您的问题" id="description"></textarea>
+                <label>请选择上门的日期：</label>
+                <input readonly class="datepicker">
+                <label>请选择时间段：</label>
+                <div class="btn-group" data-toggle="buttons">
+                      <label class="btn btn-primary">
+                        <input type="radio" name="timeslots" id="option1" value="上午">上午
+                      </label>
+                      <label class="btn btn-primary">
+                        <input type="radio" name="timeslots" id="option2" value="下午">下午
+                      </label>
+                      <label class="btn btn-primary">
+                        <input type="radio" name="timeslots" id="option3" value="晚间">晚间
+                      </label>
+                    </div>
+                <button type="button" class="submit-button">预约</button>
+            </div>
+            <div class="confirm hidden">
+                <p>您已成功预约维修！</p>
+                <p>请在<%= day %> <%= time %>保证家中有人</p>
+                <button type="button" class="cancel-button">取消预约</button>
+            </div>
+        </script>
         <script src="vendor/jquery/dist/jquery.min.js"></script>
         <script src="vendor/underscore-amd/underscore-min.js"></script>
         <script src="vendor/bootstrap/dist/js/bootstrap.min.js"></script>
@@ -105,6 +138,7 @@
         <script src="js/MyView.js"></script>
         <script src="js/MealView.js"></script>
         <script src="js/CleanView.js"></script>
+        <script src="js/RepairView.js"></script>
         <script src="js/AppRouter.js"></script>
         <script src="js/main.js"></script>
     </body>

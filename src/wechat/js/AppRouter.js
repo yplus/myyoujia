@@ -21,6 +21,8 @@ app.AppRouter = app.Backend.Router.extend({
     },
 
     repair: function() {
+        var v = new app.RepairView;
+        document.title = v.title;
     },
 
     clean: function() {
