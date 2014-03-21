@@ -1,19 +1,19 @@
 /*!
- * Parse JavaScript SDK
- * Version: 1.2.18
- * Built: Wed Mar 12 2014 15:36:03
- * http://parse.com
+ * AVOSCloud JavaScript SDK
+ * Version: 0.3.1
+ * Built: Mon Jun 03 2013 13:45:00
+ * http://avoscloud.com
  *
- * Copyright 2014 Parse, Inc.
- * The Parse JavaScript SDK is freely distributable under the MIT license.
+ * Copyright 2013 AV, Inc.
+ * The AV JavaScript SDK is freely distributable under the MIT license.
  *
  * Includes: Underscore.js
  * Copyright 2009-2012 Jeremy Ashkenas, DocumentCloud Inc.
  * Released under the MIT license.
  */
 (function(root) {
-  root.Parse = root.Parse || {};
-  root.Parse.VERSION = "js1.2.18";
+  root.AV = root.AV || {};
+  root.AV.VERSION = "js0.3.1";
 }(this));
 //     Underscore.js 1.4.4
 //     http://underscorejs.org
@@ -1246,36 +1246,40 @@
   XMLHttpRequest: false, XDomainRequest: false, exports: false,
   require: false */
 (function(root) {
-  root.Parse = root.Parse || {};
+  root.AV = root.AV || {};
   /**
-   * Contains all Parse API classes and functions.
-   * @name Parse
+   * Contains all AV API classes and functions.
+   * @name AV
    * @namespace
    *
-   * Contains all Parse API classes and functions.
+   * Contains all AV API classes and functions.
    */
-  var Parse = root.Parse;
+  var AV = root.AV;
 
-  // Import Parse's local copy of underscore.
+  // Import AV's local copy of underscore.
   if (typeof(exports) !== "undefined" && exports._) {
     // We're running in Node.js.  Pull in the dependencies.
-    Parse._ = exports._.noConflict();
-    Parse.localStorage = require('localStorage');
-    Parse.XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
-    exports.Parse = Parse;
+    AV._ = exports._.noConflict();
+    try{
+        AV.localStorage = require('localStorage');
+	}catch(error){
+		AV.localStorage = require('./localStorage.js').localStorage;
+	}
+    AV.XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
+    exports.AV = AV;
   } else {
-    Parse._ = _.noConflict();
+    AV._ = _.noConflict();
     if (typeof(localStorage) !== "undefined") {
-      Parse.localStorage = localStorage;
+      AV.localStorage = localStorage;
     }
     if (typeof(XMLHttpRequest) !== "undefined") {
-      Parse.XMLHttpRequest = XMLHttpRequest;
+      AV.XMLHttpRequest = XMLHttpRequest;
     }
   }
 
   // If jQuery or Zepto has been included, grab a reference to it.
   if (typeof($) !== "undefined") {
-    Parse.$ = $;
+    AV.$ = $;
   }
 
   // Helpers
@@ -1284,7 +1288,7 @@
   // Shared empty constructor function to aid in prototype-chain creation.
   var EmptyConstructor = function() {};
 
-  
+
   // Helper function to correctly set up the prototype chain, for subclasses.
   // Similar to `goog.inherits`, but uses a hash of prototype properties and
   // class properties to be extended.
@@ -1302,7 +1306,7 @@
     }
 
     // Inherit class (static) properties from parent.
-    Parse._.extend(child, parent);
+    AV._.extend(child, parent);
 
     // Set the prototype chain to inherit from `parent`, without calling
     // `parent`'s constructor function.
@@ -1312,12 +1316,12 @@
     // Add prototype properties (instance properties) to the subclass,
     // if supplied.
     if (protoProps) {
-      Parse._.extend(child.prototype, protoProps);
+      AV._.extend(child.prototype, protoProps);
     }
 
     // Add static properties to the constructor function, if supplied.
     if (staticProps) {
-      Parse._.extend(child, staticProps);
+      AV._.extend(child, staticProps);
     }
 
     // Correctly set child's `prototype.constructor`.
@@ -1330,117 +1334,132 @@
     return child;
   };
 
-  // Set the server for Parse to talk to.
-  Parse.serverURL = "https://api.parse.com";
+  // Set the server for AV to talk to.
+  AV.serverURL = "https://cn.avoscloud.com";
 
   // Check whether we are running in Node.js.
   if (typeof(process) !== "undefined" &&
       process.versions &&
       process.versions.node) {
-    Parse._isNode = true;
+    AV._isNode = true;
   }
 
   /**
-   * Call this method first to set up your authentication tokens for Parse.
-   * You can get your keys from the Data Browser on parse.com.
-   * @param {String} applicationId Your Parse Application ID.
-   * @param {String} javaScriptKey Your Parse JavaScript Key.
-   * @param {String} masterKey (optional) Your Parse Master Key. (Node.js only!)
+   * Call this method first to set up your authentication tokens for AV.
+   * You can get your keys from the Data Browser on avoscloud.com.
+   * @param {String} applicationId Your AV Application ID.
+   * @param {String} applicationKey Your AV JavaScript Key.
+   * @param {String} masterKey (optional) Your AVOSCloud Master Key. (Node.js only!).
    */
-  Parse.initialize = function(applicationId, javaScriptKey, masterKey) {
+  AV.initialize = function(applicationId, applicationKey, masterKey) {
     if (masterKey) {
-      throw "Parse.initialize() was passed a Master Key, which is only " +
+      throw "AV.initialize() was passed a Master Key, which is only " +
         "allowed from within Node.js.";
     }
-    Parse._initialize(applicationId, javaScriptKey);
+    AV._initialize(applicationId, applicationKey,masterKey);
   };
 
   /**
-   * Call this method first to set up master authentication tokens for Parse.
-   * This method is for Parse's own private use.
-   * @param {String} applicationId Your Parse Application ID.
-   * @param {String} javaScriptKey Your Parse JavaScript Key.
-   * @param {String} masterKey Your Parse Master Key.
+   * Call this method first to set up authentication tokens for AV.
+   * This method is for AV's own private use.
+   * @param {String} applicationId Your AV Application ID.
+   * @param {String} applicationKey Your AV Application Key
+
    */
-  Parse._initialize = function(applicationId, javaScriptKey, masterKey) {
-    Parse.applicationId = applicationId;
-    Parse.javaScriptKey = javaScriptKey;
-    Parse.masterKey = masterKey;
-    Parse._useMasterKey = false;
+   AV._initialize = function(applicationId, applicationKey, masterKey) {
+    AV.applicationId = applicationId;
+    AV.applicationKey = applicationKey;
+    AV.masterKey = masterKey;
+    AV._useMasterKey = false;
   };
 
   // If we're running in node.js, allow using the master key.
-  if (Parse._isNode) {
-    Parse.initialize = Parse._initialize;
+  if (AV._isNode) {
+    AV.initialize = AV._initialize;
 
-    Parse.Cloud = Parse.Cloud || {};
+    AV.Cloud = AV.Cloud || {};
     /**
-     * Switches the Parse SDK to using the Master key.  The Master key grants
-     * priveleged access to the data in Parse and can be used to bypass ACLs and
+     * Switches the AVOSCloud SDK to using the Master key.  The Master key grants
+     * priveleged access to the data in AVOSCloud and can be used to bypass ACLs and
      * other restrictions that are applied to the client SDKs.
      * <p><strong><em>Available in Cloud Code and Node.js only.</em></strong>
      * </p>
      */
-    Parse.Cloud.useMasterKey = function() {
-      Parse._useMasterKey = true;
+    AV.Cloud.useMasterKey = function() {
+      AV._useMasterKey = true;
     };
   }
 
+
+   /**
+    *Use china avoscloud API service:https://cn.avoscloud.com
+    */
+   AV.useAVCloudCN = function(){
+    AV.serverURL = "https://cn.avoscloud.com";
+   };
+
+   /**
+    *Use USA avoscloud API service:https://us.avoscloud.com
+    */
+   AV.useAVCloudUS = function(){
+    AV.serverURL = "https://us.avoscloud.com";
+   };
+
   /**
-   * Returns prefix for localStorage keys used by this instance of Parse.
+   * Returns prefix for localStorage keys used by this instance of AV.
    * @param {String} path The relative suffix to append to it.
    *     null or undefined is treated as the empty string.
    * @return {String} The full key name.
    */
-  Parse._getParsePath = function(path) {
-    if (!Parse.applicationId) {
-      throw "You need to call Parse.initialize before using Parse.";
+  AV._getAVPath = function(path) {
+    if (!AV.applicationId) {
+      throw "You need to call AV.initialize before using AV.";
     }
     if (!path) {
       path = "";
     }
-    if (!Parse._.isString(path)) {
+    if (!AV._.isString(path)) {
       throw "Tried to get a localStorage path that wasn't a String.";
     }
     if (path[0] === "/") {
       path = path.substring(1);
     }
-    return "Parse/" + Parse.applicationId + "/" + path;
+    return "AV/" + AV.applicationId + "/" + path;
   };
 
   /**
    * Returns the unique string for this app on this machine.
    * Gets reset when localStorage is cleared.
    */
-  Parse._installationId = null;
-  Parse._getInstallationId = function() {
+  AV._installationId = null;
+  AV._getInstallationId = function() {
     // See if it's cached in RAM.
-    if (Parse._installationId) {
-      return Parse._installationId;
+    if (AV._installationId) {
+      return AV._installationId;
     }
 
     // Try to get it from localStorage.
-    var path = Parse._getParsePath("installationId");
-    Parse._installationId = Parse.localStorage.getItem(path);
+    var path = AV._getAVPath("installationId");
+    AV._installationId = AV.localStorage.getItem(path);
 
-    if (!Parse._installationId || Parse._installationId === "") {
+    if (!AV._installationId || AV._installationId === "") {
       // It wasn't in localStorage, so create a new one.
       var hexOctet = function() {
         return Math.floor((1+Math.random())*0x10000).toString(16).substring(1);
       };
-      Parse._installationId = (
+      AV._installationId = (
         hexOctet() + hexOctet() + "-" +
         hexOctet() + "-" +
         hexOctet() + "-" +
         hexOctet() + "-" +
         hexOctet() + hexOctet() + hexOctet());
-      Parse.localStorage.setItem(path, Parse._installationId);
+      AV.localStorage.setItem(path, AV._installationId);
     }
 
-    return Parse._installationId;
+    return AV._installationId;
   };
 
-  Parse._parseDate = function(iso8601) {
+  AV._parseDate = function(iso8601) {
     var regexp = new RegExp(
       "^([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})" + "T" +
       "([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})" +
@@ -1461,8 +1480,8 @@
     return new Date(Date.UTC(year, month, day, hour, minute, second, milli));
   };
 
-  Parse._ajaxIE8 = function(method, url, data) {
-    var promise = new Parse.Promise();
+  AV._ajaxIE8 = function(method, url, data) {
+    var promise = new AV.Promise();
     var xdr = new XDomainRequest();
     xdr.onload = function() {
       var response;
@@ -1476,14 +1495,7 @@
       }
     };
     xdr.onerror = xdr.ontimeout = function() {
-      // Let's fake a real error message.
-      var fakeResponse = {
-        responseText: JSON.stringify({
-          code: Parse.Error.X_DOMAIN_REQUEST,
-          error: "IE's XDomainRequest does not supply error info."
-        })
-      };
-      promise.reject(fakeResponse);
+      promise.reject(xdr);
     };
     xdr.onprogress = function() {};
     xdr.open(method, url);
@@ -1491,33 +1503,21 @@
     return promise;
   };
 
-  Parse._useXDomainRequest = function() {
-    if (typeof(XDomainRequest) !== "undefined") {
-      // We're in IE 8+.
-      if ('withCredentials' in new XMLHttpRequest()) {
-        // We're in IE 10+.
-        return false;
-      }
-      return true;
-    }
-    return false;
-  };
 
-  
-  Parse._ajax = function(method, url, data, success, error) {
+  AV._ajax = function(method, url, data, success, error) {
     var options = {
       success: success,
       error: error
     };
 
-    if (Parse._useXDomainRequest()) {
-      return Parse._ajaxIE8(method, url, data)._thenRunCallbacks(options);
+    if (typeof(XDomainRequest) !== "undefined") {
+      return AV._ajaxIE8(method, url, data)._thenRunCallbacks(options);
     }
 
-    var promise = new Parse.Promise();
+    var promise = new AV.Promise();
     var handled = false;
 
-    var xhr = new Parse.XMLHttpRequest();
+    var xhr = new AV.XMLHttpRequest();
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4) {
         if (handled) {
@@ -1542,10 +1542,10 @@
     };
     xhr.open(method, url, true);
     xhr.setRequestHeader("Content-Type", "text/plain");  // avoid pre-flight.
-    if (Parse._isNode) {
+    if (AV._isNode) {
       // Add a special user agent just for request from node.js.
       xhr.setRequestHeader("User-Agent",
-                           "Parse/" + Parse.VERSION +
+                           "AV/" + AV.VERSION +
                            " (NodeJS " + process.versions.node + ")");
     }
     xhr.send(data);
@@ -1553,63 +1553,45 @@
   };
 
   // A self-propagating extend function.
-  Parse._extend = function(protoProps, classProps) {
+  AV._extend = function(protoProps, classProps) {
     var child = inherits(this, protoProps, classProps);
     child.extend = this.extend;
     return child;
   };
 
   /**
-   * Options:
-   *   route: is classes, users, login, etc.
-   *   objectId: null if there is no associated objectId.
-   *   method: the http method for the REST API.
-   *   dataObject: the payload as an object, or null if there is none.
-   *   useMasterKey: overrides whether to use the master key if set.
+   * route is classes, users, login, etc.
+   * objectId is null if there is no associated objectId.
+   * method is the http method for the REST API.
+   * dataObject is the payload as an object, or null if there is none.
    * @ignore
    */
-  Parse._request = function(options) {
-    var route = options.route;
-    var className = options.className;
-    var objectId = options.objectId;
-    var method = options.method;
-    var useMasterKey = options.useMasterKey;
-    var sessionToken = options.sessionToken;
-    var dataObject = options.data;
-
-    if (!Parse.applicationId) {
-      throw "You must specify your applicationId using Parse.initialize.";
+  AV._request = function(route, className, objectId, method, dataObject) {
+    if (!AV.applicationId) {
+      throw "You must specify your applicationId using AV.initialize";
     }
 
-    if (!Parse.javaScriptKey && !Parse.masterKey) {
-      throw "You must specify a key using Parse.initialize.";
+    if (!AV.applicationKey && !AV.masterKey) {
+      throw "You must specify a key using AV.initialize";
     }
 
-    
-    if (!sessionToken) {
-      // Use the current user session token if none was provided.
-      var currentUser = Parse.User.current();
-      if (currentUser && currentUser._sessionToken) {
-        sessionToken = currentUser._sessionToken;
-      }
-    }
 
-    
     if (route !== "batch" &&
         route !== "classes" &&
-        route !== "events" &&
         route !== "files" &&
         route !== "functions" &&
         route !== "login" &&
         route !== "push" &&
         route !== "requestPasswordReset" &&
-        route !== "rest_verify_analytics" &&
         route !== "users" &&
-        route !== "jobs") {
+        route !== "statuses" &&
+        route !== 'subscribe/statuses/count' &&
+        route !== 'subscribe/statuses' &&
+        !(/users\/[^\/]+\/friendship\/[^\/]+/.test(route))) {
       throw "Bad route: '" + route + "'.";
     }
 
-    var url = Parse.serverURL;
+    var url = AV.serverURL;
     if (url.charAt(url.length - 1) !== "/") {
       url += "/";
     }
@@ -1621,128 +1603,119 @@
       url += "/" + objectId;
     }
 
-    dataObject = Parse._.clone(dataObject || {});
+    dataObject = AV._.clone(dataObject || {});
     if (method !== "POST") {
       dataObject._method = method;
       method = "POST";
     }
 
-    if (Parse._.isUndefined(useMasterKey)) {
-      useMasterKey = Parse._useMasterKey;
-    }
-
-    dataObject._ApplicationId = Parse.applicationId;
-    if (!useMasterKey) {
-      dataObject._JavaScriptKey = Parse.javaScriptKey;
-    } else {
-      dataObject._MasterKey = Parse.masterKey;
-    }
-
-    dataObject._ClientVersion = Parse.VERSION;
-    dataObject._InstallationId = Parse._getInstallationId();
-    if (sessionToken) {
-      dataObject._SessionToken = sessionToken;
+    dataObject._ApplicationId = AV.applicationId;
+    dataObject._ApplicationKey = AV.applicationKey;
+    if(AV._useMasterKey)
+        dataObject._MasterKey = AV.masterKey;
+    dataObject._ClientVersion = AV.VERSION;
+    dataObject._InstallationId = AV._getInstallationId();
+    // Pass the session token on every request.
+    var currentUser = AV.User.current();
+    if (currentUser && currentUser._sessionToken) {
+      dataObject._SessionToken = currentUser._sessionToken;
     }
     var data = JSON.stringify(dataObject);
 
-    return Parse._ajax(method, url, data).then(null, function(response) {
-      // Transform the error into an instance of Parse.Error by trying to parse
+    return AV._ajax(method, url, data).then(null, function(response) {
+      // Transform the error into an instance of AV.Error by trying to parse
       // the error string as JSON.
       var error;
       if (response && response.responseText) {
         try {
           var errorJSON = JSON.parse(response.responseText);
-          error = new Parse.Error(errorJSON.code, errorJSON.error);
+          if (errorJSON) {
+            error = new AV.Error(errorJSON.code, errorJSON.error);
+          }
         } catch (e) {
           // If we fail to parse the error text, that's okay.
-          error = new Parse.Error(
-              Parse.Error.INVALID_JSON,
-              "Received an error with invalid JSON from Parse: " +
-                  response.responseText);
         }
-      } else {
-        error = new Parse.Error(
-            Parse.Error.CONNECTION_FAILED,
-            "XMLHttpRequest failed: " + JSON.stringify(response));
       }
+      error = error || new AV.Error(-1, response.responseText);
       // By explicitly returning a rejected Promise, this will work with
       // either jQuery or Promises/A semantics.
-      return Parse.Promise.error(error);
+      return AV.Promise.error(error);
     });
   };
 
   // Helper function to get a value from a Backbone object as a property
   // or as a function.
-  Parse._getValue = function(object, prop) {
+  AV._getValue = function(object, prop) {
     if (!(object && object[prop])) {
       return null;
     }
-    return Parse._.isFunction(object[prop]) ? object[prop]() : object[prop];
+    return AV._.isFunction(object[prop]) ? object[prop]() : object[prop];
   };
 
   /**
-   * Converts a value in a Parse Object into the appropriate representation.
-   * This is the JS equivalent of Java's Parse.maybeReferenceAndEncode(Object)
-   * if seenObjects is falsey. Otherwise any Parse.Objects not in
+   * Converts a value in a AV Object into the appropriate representation.
+   * This is the JS equivalent of Java's AV.maybeReferenceAndEncode(Object)
+   * if seenObjects is falsey. Otherwise any AV.Objects not in
    * seenObjects will be fully embedded rather than encoded
    * as a pointer.  This array will be used to prevent going into an infinite
-   * loop because we have circular references.  If seenObjects
-   * is set, then none of the Parse Objects that are serialized can be dirty.
+   * loop because we have circular references.  If <seenObjects>
+   * is set, then none of the AV Objects that are serialized can be dirty.
    */
-  Parse._encode = function(value, seenObjects, disallowObjects) {
-    var _ = Parse._;
-    if (value instanceof Parse.Object) {
+  AV._encode = function(value, seenObjects, disallowObjects) {
+    var _ = AV._;
+    if (value instanceof AV.Object) {
       if (disallowObjects) {
-        throw "Parse.Objects not allowed here";
+        throw "AV.Objects not allowed here";
       }
       if (!seenObjects || _.include(seenObjects, value) || !value._hasData) {
         return value._toPointer();
       }
       if (!value.dirty()) {
         seenObjects = seenObjects.concat(value);
-        return Parse._encode(value._toFullJSON(seenObjects),
+        return AV._encode(value._toFullJSON(seenObjects),
                              seenObjects,
                              disallowObjects);
       }
       throw "Tried to save an object with a pointer to a new, unsaved object.";
     }
-    if (value instanceof Parse.ACL) {
+    if (value instanceof AV.ACL) {
       return value.toJSON();
     }
     if (_.isDate(value)) {
       return { "__type": "Date", "iso": value.toJSON() };
     }
-    if (value instanceof Parse.GeoPoint) {
+    if (value instanceof AV.GeoPoint) {
       return value.toJSON();
     }
     if (_.isArray(value)) {
       return _.map(value, function(x) {
-        return Parse._encode(x, seenObjects, disallowObjects);
+        return AV._encode(x, seenObjects, disallowObjects);
       });
     }
     if (_.isRegExp(value)) {
       return value.source;
     }
-    if (value instanceof Parse.Relation) {
+    if (value instanceof AV.Relation) {
       return value.toJSON();
     }
-    if (value instanceof Parse.Op) {
+    if (value instanceof AV.Op) {
       return value.toJSON();
     }
-    if (value instanceof Parse.File) {
+    if (value instanceof AV.File) {
       if (!value.url()) {
         throw "Tried to save an object containing an unsaved file.";
       }
       return {
         __type: "File",
+        id:  value.id,
         name: value.name(),
         url: value.url()
       };
     }
     if (_.isObject(value)) {
       var output = {};
-      Parse._objectEach(value, function(v, k) {
-        output[k] = Parse._encode(v, seenObjects, disallowObjects);
+      AV._objectEach(value, function(v, k) {
+        output[k] = AV._encode(v, seenObjects, disallowObjects);
       });
       return output;
     }
@@ -1750,35 +1723,42 @@
   };
 
   /**
-   * The inverse function of Parse._encode.
+   * The inverse function of AV._encode.
    * TODO: make decode not mutate value.
    */
-  Parse._decode = function(key, value) {
-    var _ = Parse._;
+  AV._decode = function(key, value) {
+    var _ = AV._;
     if (!_.isObject(value)) {
       return value;
     }
     if (_.isArray(value)) {
-      Parse._arrayEach(value, function(v, k) {
-        value[k] = Parse._decode(k, v);
+      AV._arrayEach(value, function(v, k) {
+        value[k] = AV._decode(k, v);
       });
       return value;
     }
-    if (value instanceof Parse.Object) {
+    if (value instanceof AV.Object) {
       return value;
     }
-    if (value instanceof Parse.File) {
+    if (value instanceof AV.File) {
       return value;
     }
-    if (value instanceof Parse.Op) {
+    if (value instanceof AV.Op) {
       return value;
     }
     if (value.__op) {
-      return Parse.Op._decode(value);
+      return AV.Op._decode(value);
     }
     if (value.__type === "Pointer") {
-      var pointer = Parse.Object._create(value.className);
-      pointer._finishFetch({ objectId: value.objectId }, false);
+      var className = value.className;
+      var pointer = AV.Object._create(className);
+      if(value.createdAt){
+          delete value.__type;
+          delete value.className;
+          pointer._finishFetch(value, true);
+      }else{
+          pointer._finishFetch({ objectId: value.objectId }, false);
+      }
       return pointer;
     }
     if (value.__type === "Object") {
@@ -1786,42 +1766,44 @@
       var className = value.className;
       delete value.__type;
       delete value.className;
-      var object = Parse.Object._create(className);
+      var object = AV.Object._create(className);
       object._finishFetch(value, true);
       return object;
     }
     if (value.__type === "Date") {
-      return Parse._parseDate(value.iso);
+      return AV._parseDate(value.iso);
     }
     if (value.__type === "GeoPoint") {
-      return new Parse.GeoPoint({
+      return new AV.GeoPoint({
         latitude: value.latitude,
         longitude: value.longitude
       });
     }
     if (key === "ACL") {
-      if (value instanceof Parse.ACL) {
+      if (value instanceof AV.ACL) {
         return value;
       }
-      return new Parse.ACL(value);
+      return new AV.ACL(value);
     }
     if (value.__type === "Relation") {
-      var relation = new Parse.Relation(null, key);
+      var relation = new AV.Relation(null, key);
       relation.targetClassName = value.className;
       return relation;
     }
     if (value.__type === "File") {
-      var file = new Parse.File(value.name);
+      var file = new AV.File(value.name);
+      file._metaData = value.metaData || {};
       file._url = value.url;
+      file.id = value.objectId;
       return file;
     }
-    Parse._objectEach(value, function(v, k) {
-      value[k] = Parse._decode(k, v);
+    AV._objectEach(value, function(v, k) {
+      value[k] = AV._decode(k, v);
     });
     return value;
   };
 
-  Parse._arrayEach = Parse._.each;
+  AV._arrayEach = AV._.each;
 
   /**
    * Does a deep traversal of every item in object, calling func on every one.
@@ -1831,34 +1813,34 @@
    *     value will replace the item in its parent container.
    * @returns {} the result of calling func on the top-level object itself.
    */
-  Parse._traverse = function(object, func, seen) {
-    if (object instanceof Parse.Object) {
+  AV._traverse = function(object, func, seen) {
+    if (object instanceof AV.Object) {
       seen = seen || [];
-      if (Parse._.indexOf(seen, object) >= 0) {
+      if (AV._.indexOf(seen, object) >= 0) {
         // We've already visited this object in this call.
         return;
       }
       seen.push(object);
-      Parse._traverse(object.attributes, func, seen);
+      AV._traverse(object.attributes, func, seen);
       return func(object);
     }
-    if (object instanceof Parse.Relation || object instanceof Parse.File) {
+    if (object instanceof AV.Relation || object instanceof AV.File) {
       // Nothing needs to be done, but we don't want to recurse into the
       // object's parent infinitely, so we catch this case.
       return func(object);
     }
-    if (Parse._.isArray(object)) {
-      Parse._.each(object, function(child, index) {
-        var newChild = Parse._traverse(child, func, seen);
+    if (AV._.isArray(object)) {
+      AV._.each(object, function(child, index) {
+        var newChild = AV._traverse(child, func, seen);
         if (newChild) {
           object[index] = newChild;
         }
       });
       return func(object);
     }
-    if (Parse._.isObject(object)) {
-      Parse._each(object, function(child, key) {
-        var newChild = Parse._traverse(child, func, seen);
+    if (AV._.isObject(object)) {
+      AV._each(object, function(child, key) {
+        var newChild = AV._traverse(child, func, seen);
         if (newChild) {
           object[key] = newChild;
         }
@@ -1873,8 +1855,8 @@
    * * it doesn't work for so-called array-like objects,
    * * it does work for dictionaries with a "length" attribute.
    */
-  Parse._objectEach = Parse._each = function(obj, callback) {
-    var _ = Parse._;
+  AV._objectEach = AV._each = function(obj, callback) {
+    var _ = AV._;
     if (_.isObject(obj)) {
       _.each(_.keys(obj), function(key) {
         callback(obj[key], key);
@@ -1885,94 +1867,30 @@
   };
 
   // Helper function to check null or undefined.
-  Parse._isNullOrUndefined = function(x) {
-    return Parse._.isNull(x) || Parse._.isUndefined(x);
+  AV._isNullOrUndefined = function(x) {
+    return AV._.isNull(x) || AV._.isUndefined(x);
   };
 }(this));
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
-   * @namespace Provides an interface to Parse's logging and analytics backend.
-   */
-  Parse.Analytics = Parse.Analytics || {};
-
-  _.extend(Parse.Analytics, /** @lends Parse.Analytics */ {
-    /**
-     * Tracks the occurrence of a custom event with additional dimensions.
-     * Parse will store a data point at the time of invocation with the given
-     * event name.
-     *
-     * Dimensions will allow segmentation of the occurrences of this custom
-     * event. Keys and values should be {@code String}s, and will throw
-     * otherwise.
-     *
-     * To track a user signup along with additional metadata, consider the
-     * following:
-     * <pre>
-     * var dimensions = {
-     *  gender: 'm',
-     *  source: 'web',
-     *  dayType: 'weekend'
-     * };
-     * Parse.Analytics.track('signup', dimensions);
-     * </pre>
-     *
-     * There is a default limit of 4 dimensions per event tracked.
-     *
-     * @param {String} name The name of the custom event to report to Parse as
-     * having happened.
-     * @param {Object} dimensions The dictionary of information by which to
-     * segment this event.
-     * @return {Parse.Promise} A promise that is resolved when the round-trip
-     * to the server completes.
-     */
-    track: function(name, dimensions) {
-      name = name || '';
-      name = name.replace(/^\s*/, '');
-      name = name.replace(/\s*$/, '');
-      if (name.length === 0) {
-        throw 'A name for the custom event must be provided';
-      }
-
-      _.each(dimensions, function(val, key) {
-        if (!_.isString(key) || !_.isString(val)) {
-          throw 'track() dimensions expects keys and values of type "string".';
-        }
-      });
-
-      return Parse._request({
-        route: 'events',
-        className: name,
-        method: 'POST',
-        data: { dimensions: dimensions }
-      });
-    }
-  });
-}(this));
-
-(function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
-
-  /**
-   * Constructs a new Parse.Error object with the given code and message.
-   * @param {Number} code An error code constant from <code>Parse.Error</code>.
+   * Constructs a new AV.Error object with the given code and message.
+   * @param {Number} code An error code constant from <code>AV.Error</code>.
    * @param {String} message A detailed description of the error.
    * @class
    *
    * <p>Class used for all objects passed to error callbacks.</p>
    */
-  Parse.Error = function(code, message) {
+  AV.Error = function(code, message) {
     this.code = code;
     this.message = message;
   };
 
-  _.extend(Parse.Error, /** @lends Parse.Error */ {
+  _.extend(AV.Error, /** @lends AV.Error */ {
     /**
      * Error code indicating some error other than those enumerated here.
      * @constant
@@ -1981,14 +1899,14 @@
 
     /**
      * Error code indicating that something has gone wrong with the server.
-     * If you get this error code, it is Parse's fault. Contact us at 
-     * https://parse.com/help
+     * If you get this error code, it is AV's fault. Contact us at
+     * https://avoscloud.com/help
      * @constant
      */
     INTERNAL_SERVER_ERROR: 1,
 
     /**
-     * Error code indicating the connection to the Parse servers failed.
+     * Error code indicating the connection to the AV servers failed.
      * @constant
      */
     CONNECTION_FAILED: 100,
@@ -2029,7 +1947,7 @@
 
     /**
      * Error code indicating a malformed pointer. You should not see this unless
-     * you have been mucking about changing internal Parse code.
+     * you have been mucking about changing internal AV code.
      * @constant
      */
     INVALID_POINTER: 106,
@@ -2050,7 +1968,7 @@
     COMMAND_UNAVAILABLE: 108,
 
     /**
-     * You must call Parse.initialize before using the Parse library.
+     * You must call AV.initialize before using the AV library.
      * @constant
      */
     NOT_INITIALIZED: 109,
@@ -2101,7 +2019,7 @@
     INVALID_NESTED_KEY: 121,
 
     /**
-     * Error code indicating that an invalid filename was used for ParseFile.
+     * Error code indicating that an invalid filename was used for AVFile.
      * A valid file name contains only a-zA-Z0-9_. characters and is between 1
      * and 128 characters.
      * @constant
@@ -2287,30 +2205,7 @@
      * Twitter) is unsupported.
      * @constant
      */
-    UNSUPPORTED_SERVICE: 252,
-
-    /**
-     * Error code indicating that there were multiple errors. Aggregate errors
-     * have an "errors" property, which is an array of error objects with more
-     * detail about each error that occurred.
-     * @constant
-     */
-    AGGREGATE_ERROR: 600,
-
-    /**
-     * Error code indicating the client was unable to read an input file.
-     * @constant
-     */
-    FILE_READ_ERROR: 601,
-
-    /**
-     * Error code indicating a real error code is unavailable because
-     * we had to use an XDomainRequest object to allow CORS requests in
-     * Internet Explorer, which strips the body from HTTP responses that have
-     * a non-2XX status code.
-     * @constant
-     */
-    X_DOMAIN_REQUEST: 602
+    UNSUPPORTED_SERVICE: 252
   });
 
 }(this));
@@ -2318,14 +2213,14 @@
 /*global _: false */
 (function() {
   var root = this;
-  var Parse = (root.Parse || (root.Parse = {}));
+  var AV = (root.AV || (root.AV = {}));
   var eventSplitter = /\s+/;
   var slice = Array.prototype.slice;
 
   /**
    * @class
    *
-   * <p>Parse.Events is a fork of Backbone's Events module, provided for your
+   * <p>AV.Events is a fork of Backbone's Events module, provided for your
    * convenience.</p>
    *
    * <p>A module that can be mixed in to any object in order to provide
@@ -2336,7 +2231,7 @@
    *
    * <pre>
    *     var object = {};
-   *     _.extend(object, Parse.Events);
+   *     _.extend(object, AV.Events);
    *     object.on('expand', function(){ alert('expanded'); });
    *     object.trigger('expand');</pre></p>
    *
@@ -2344,7 +2239,7 @@
    * <a href="http://documentcloud.github.com/backbone/#Events">Backbone
    * documentation</a>.</p>
    */
-  Parse.Events = {
+  AV.Events = {
     /**
      * Bind one or more space separated events, `events`, to a `callback`
      * function. Passing `"all"` will bind the callback to all events fired.
@@ -2458,25 +2353,25 @@
 
       return this;
     }
-  };  
+  };
 
   /**
    * @function
    */
-  Parse.Events.bind = Parse.Events.on;
+  AV.Events.bind = AV.Events.on;
 
   /**
    * @function
    */
-  Parse.Events.unbind = Parse.Events.off;
+  AV.Events.unbind = AV.Events.off;
 }.call(this));
 
 
 /*global navigator: false */
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * Creates a new GeoPoint with any of the following forms:<br>
@@ -2490,28 +2385,28 @@
    * @class
    *
    * <p>Represents a latitude / longitude point that may be associated
-   * with a key in a ParseObject or used as a reference point for geo queries.
+   * with a key in a AVObject or used as a reference point for geo queries.
    * This allows proximity-based queries on the key.</p>
    *
    * <p>Only one key in a class may contain a GeoPoint.</p>
    *
    * <p>Example:<pre>
-   *   var point = new Parse.GeoPoint(30.0, -20.0);
-   *   var object = new Parse.Object("PlaceObject");
+   *   var point = new AV.GeoPoint(30.0, -20.0);
+   *   var object = new AV.Object("PlaceObject");
    *   object.set("location", point);
    *   object.save();</pre></p>
    */
-  Parse.GeoPoint = function(arg1, arg2) {
+  AV.GeoPoint = function(arg1, arg2) {
     if (_.isArray(arg1)) {
-      Parse.GeoPoint._validate(arg1[0], arg1[1]);
+      AV.GeoPoint._validate(arg1[0], arg1[1]);
       this.latitude = arg1[0];
       this.longitude = arg1[1];
     } else if (_.isObject(arg1)) {
-      Parse.GeoPoint._validate(arg1.latitude, arg1.longitude);
+      AV.GeoPoint._validate(arg1.latitude, arg1.longitude);
       this.latitude = arg1.latitude;
       this.longitude = arg1.longitude;
     } else if (_.isNumber(arg1) && _.isNumber(arg2)) {
-      Parse.GeoPoint._validate(arg1, arg2);
+      AV.GeoPoint._validate(arg1, arg2);
       this.latitude = arg1;
       this.longitude = arg2;
     } else {
@@ -2534,18 +2429,18 @@
         return self._longitude;
       });
       this.__defineSetter__("latitude", function(val) {
-        Parse.GeoPoint._validate(val, self.longitude);
+        AV.GeoPoint._validate(val, self.longitude);
         self._latitude = val;
       });
       this.__defineSetter__("longitude", function(val) {
-        Parse.GeoPoint._validate(self.latitude, val);
+        AV.GeoPoint._validate(self.latitude, val);
         self._longitude = val;
       });
     }
   };
 
   /**
-   * @lends Parse.GeoPoint.prototype
+   * @lends AV.GeoPoint.prototype
    * @property {float} latitude North-south portion of the coordinate, in range
    *   [-90, 90].  Throws an exception if set out of range in a modern browser.
    * @property {float} longitude East-west portion of the coordinate, in range
@@ -2555,18 +2450,18 @@
   /**
    * Throws an exception if the given lat-long is out of bounds.
    */
-  Parse.GeoPoint._validate = function(latitude, longitude) {
+  AV.GeoPoint._validate = function(latitude, longitude) {
     if (latitude < -90.0) {
-      throw "Parse.GeoPoint latitude " + latitude + " < -90.0.";
+      throw "AV.GeoPoint latitude " + latitude + " < -90.0.";
     }
     if (latitude > 90.0) {
-      throw "Parse.GeoPoint latitude " + latitude + " > 90.0.";
+      throw "AV.GeoPoint latitude " + latitude + " > 90.0.";
     }
     if (longitude < -180.0) {
-      throw "Parse.GeoPoint longitude " + longitude + " < -180.0.";
+      throw "AV.GeoPoint longitude " + longitude + " < -180.0.";
     }
     if (longitude > 180.0) {
-      throw "Parse.GeoPoint longitude " + longitude + " > 180.0.";
+      throw "AV.GeoPoint longitude " + longitude + " > 180.0.";
     }
   };
 
@@ -2575,10 +2470,10 @@
    * Calls options.success with a new GeoPoint instance or calls options.error.
    * @param {Object} options An object with success and error callbacks.
    */
-  Parse.GeoPoint.current = function(options) {
-    var promise = new Parse.Promise();
+  AV.GeoPoint.current = function(options) {
+    var promise = new AV.Promise();
     navigator.geolocation.getCurrentPosition(function(location) {
-      promise.resolve(new Parse.GeoPoint({
+      promise.resolve(new AV.GeoPoint({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude
       }));
@@ -2590,13 +2485,13 @@
     return promise._thenRunCallbacks(options);
   };
 
-  Parse.GeoPoint.prototype = {
+  AV.GeoPoint.prototype = {
     /**
-     * Returns a JSON representation of the GeoPoint, suitable for Parse.
+     * Returns a JSON representation of the GeoPoint, suitable for AV.
      * @return {Object}
      */
     toJSON: function() {
-      Parse.GeoPoint._validate(this.latitude, this.longitude);
+      AV.GeoPoint._validate(this.latitude, this.longitude);
       return {
         "__type": "GeoPoint",
         latitude: this.latitude,
@@ -2606,7 +2501,7 @@
 
     /**
      * Returns the distance from this GeoPoint to another in radians.
-     * @param {Parse.GeoPoint} point the other Parse.GeoPoint.
+     * @param {AV.GeoPoint} point the other AV.GeoPoint.
      * @return {Number}
      */
     radiansTo: function(point) {
@@ -2629,7 +2524,7 @@
 
     /**
      * Returns the distance from this GeoPoint to another in kilometers.
-     * @param {Parse.GeoPoint} point the other Parse.GeoPoint.
+     * @param {AV.GeoPoint} point the other AV.GeoPoint.
      * @return {Number}
      */
     kilometersTo: function(point) {
@@ -2638,7 +2533,7 @@
 
     /**
      * Returns the distance from this GeoPoint to another in miles.
-     * @param {Parse.GeoPoint} point the other Parse.GeoPoint.
+     * @param {AV.GeoPoint} point the other AV.GeoPoint.
      * @return {Number}
      */
     milesTo: function(point) {
@@ -2649,43 +2544,43 @@
 
 /*global navigator: false */
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   var PUBLIC_KEY = "*";
 
   /**
    * Creates a new ACL.
    * If no argument is given, the ACL has no permissions for anyone.
-   * If the argument is a Parse.User, the ACL will have read and write
+   * If the argument is a AV.User, the ACL will have read and write
    *   permission for only that user.
    * If the argument is any other JSON object, that object will be interpretted
    *   as a serialized ACL created with toJSON().
-   * @see Parse.Object#setACL
+   * @see AV.Object#setACL
    * @class
    *
    * <p>An ACL, or Access Control List can be added to any
-   * <code>Parse.Object</code> to restrict access to only a subset of users
+   * <code>AV.Object</code> to restrict access to only a subset of users
    * of your application.</p>
    */
-  Parse.ACL = function(arg1) {
+  AV.ACL = function(arg1) {
     var self = this;
     self.permissionsById = {};
     if (_.isObject(arg1)) {
-      if (arg1 instanceof Parse.User) {
+      if (arg1 instanceof AV.User) {
         self.setReadAccess(arg1, true);
         self.setWriteAccess(arg1, true);
       } else {
         if (_.isFunction(arg1)) {
-          throw "Parse.ACL() called with a function.  Did you forget ()?";
+          throw "AV.ACL() called with a function.  Did you forget ()?";
         }
-        Parse._objectEach(arg1, function(accessList, userId) {
+        AV._objectEach(arg1, function(accessList, userId) {
           if (!_.isString(userId)) {
             throw "Tried to create an ACL with an invalid userId.";
           }
           self.permissionsById[userId] = {};
-          Parse._objectEach(accessList, function(allowed, permission) {
+          AV._objectEach(accessList, function(allowed, permission) {
             if (permission !== "read" && permission !== "write") {
               throw "Tried to create an ACL with an invalid permission type.";
             }
@@ -2703,14 +2598,14 @@
    * Returns a JSON-encoded version of the ACL.
    * @return {Object}
    */
-  Parse.ACL.prototype.toJSON = function() {
+  AV.ACL.prototype.toJSON = function() {
     return _.clone(this.permissionsById);
   };
 
-  Parse.ACL.prototype._setAccess = function(accessType, userId, allowed) {
-    if (userId instanceof Parse.User) {
+  AV.ACL.prototype._setAccess = function(accessType, userId, allowed) {
+    if (userId instanceof AV.User) {
       userId = userId.id;
-    } else if (userId instanceof Parse.Role) {
+    } else if (userId instanceof AV.Role) {
       userId = "role:" + userId.getName();
     }
     if (!_.isString(userId)) {
@@ -2740,10 +2635,10 @@
     }
   };
 
-  Parse.ACL.prototype._getAccess = function(accessType, userId) {
-    if (userId instanceof Parse.User) {
+  AV.ACL.prototype._getAccess = function(accessType, userId) {
+    if (userId instanceof AV.User) {
       userId = userId.id;
-    } else if (userId instanceof Parse.Role) {
+    } else if (userId instanceof AV.Role) {
       userId = "role:" + userId.getName();
     }
     var permissions = this.permissionsById[userId];
@@ -2755,10 +2650,10 @@
 
   /**
    * Set whether the given user is allowed to read this object.
-   * @param userId An instance of Parse.User or its objectId.
+   * @param userId An instance of AV.User or its objectId.
    * @param {Boolean} allowed Whether that user should have read access.
    */
-  Parse.ACL.prototype.setReadAccess = function(userId, allowed) {
+  AV.ACL.prototype.setReadAccess = function(userId, allowed) {
     this._setAccess("read", userId, allowed);
   };
 
@@ -2767,19 +2662,19 @@
    * Even if this returns false, the user may still be able to access it if
    * getPublicReadAccess returns true or a role that the user belongs to has
    * write access.
-   * @param userId An instance of Parse.User or its objectId, or a Parse.Role.
+   * @param userId An instance of AV.User or its objectId, or a AV.Role.
    * @return {Boolean}
    */
-  Parse.ACL.prototype.getReadAccess = function(userId) {
+  AV.ACL.prototype.getReadAccess = function(userId) {
     return this._getAccess("read", userId);
   };
 
   /**
    * Set whether the given user id is allowed to write this object.
-   * @param userId An instance of Parse.User or its objectId, or a Parse.Role..
+   * @param userId An instance of AV.User or its objectId, or a AV.Role..
    * @param {Boolean} allowed Whether that user should have write access.
    */
-  Parse.ACL.prototype.setWriteAccess = function(userId, allowed) {
+  AV.ACL.prototype.setWriteAccess = function(userId, allowed) {
     this._setAccess("write", userId, allowed);
   };
 
@@ -2788,10 +2683,10 @@
    * Even if this returns false, the user may still be able to write it if
    * getPublicWriteAccess returns true or a role that the user belongs to has
    * write access.
-   * @param userId An instance of Parse.User or its objectId, or a Parse.Role.
+   * @param userId An instance of AV.User or its objectId, or a AV.Role.
    * @return {Boolean}
    */
-  Parse.ACL.prototype.getWriteAccess = function(userId) {
+  AV.ACL.prototype.getWriteAccess = function(userId) {
     return this._getAccess("write", userId);
   };
 
@@ -2799,7 +2694,7 @@
    * Set whether the public is allowed to read this object.
    * @param {Boolean} allowed
    */
-  Parse.ACL.prototype.setPublicReadAccess = function(allowed) {
+  AV.ACL.prototype.setPublicReadAccess = function(allowed) {
     this.setReadAccess(PUBLIC_KEY, allowed);
   };
 
@@ -2807,7 +2702,7 @@
    * Get whether the public is allowed to read this object.
    * @return {Boolean}
    */
-  Parse.ACL.prototype.getPublicReadAccess = function() {
+  AV.ACL.prototype.getPublicReadAccess = function() {
     return this.getReadAccess(PUBLIC_KEY);
   };
 
@@ -2815,7 +2710,7 @@
    * Set whether the public is allowed to write this object.
    * @param {Boolean} allowed
    */
-  Parse.ACL.prototype.setPublicWriteAccess = function(allowed) {
+  AV.ACL.prototype.setPublicWriteAccess = function(allowed) {
     this.setWriteAccess(PUBLIC_KEY, allowed);
   };
 
@@ -2823,60 +2718,60 @@
    * Get whether the public is allowed to write this object.
    * @return {Boolean}
    */
-  Parse.ACL.prototype.getPublicWriteAccess = function() {
+  AV.ACL.prototype.getPublicWriteAccess = function() {
     return this.getWriteAccess(PUBLIC_KEY);
   };
-  
+
   /**
    * Get whether users belonging to the given role are allowed
    * to read this object. Even if this returns false, the role may
    * still be able to write it if a parent role has read access.
-   * 
-   * @param role The name of the role, or a Parse.Role object.
+   *
+   * @param role The name of the role, or a AV.Role object.
    * @return {Boolean} true if the role has read access. false otherwise.
-   * @throws {String} If role is neither a Parse.Role nor a String.
+   * @throws {String} If role is neither a AV.Role nor a String.
    */
-  Parse.ACL.prototype.getRoleReadAccess = function(role) {
-    if (role instanceof Parse.Role) {
+  AV.ACL.prototype.getRoleReadAccess = function(role) {
+    if (role instanceof AV.Role) {
       // Normalize to the String name
       role = role.getName();
     }
     if (_.isString(role)) {
       return this.getReadAccess("role:" + role);
     }
-    throw "role must be a Parse.Role or a String";
+    throw "role must be a AV.Role or a String";
   };
-  
+
   /**
    * Get whether users belonging to the given role are allowed
    * to write this object. Even if this returns false, the role may
    * still be able to write it if a parent role has write access.
-   * 
-   * @param role The name of the role, or a Parse.Role object.
+   *
+   * @param role The name of the role, or a AV.Role object.
    * @return {Boolean} true if the role has write access. false otherwise.
-   * @throws {String} If role is neither a Parse.Role nor a String.
+   * @throws {String} If role is neither a AV.Role nor a String.
    */
-  Parse.ACL.prototype.getRoleWriteAccess = function(role) {
-    if (role instanceof Parse.Role) {
+  AV.ACL.prototype.getRoleWriteAccess = function(role) {
+    if (role instanceof AV.Role) {
       // Normalize to the String name
       role = role.getName();
     }
     if (_.isString(role)) {
       return this.getWriteAccess("role:" + role);
     }
-    throw "role must be a Parse.Role or a String";
+    throw "role must be a AV.Role or a String";
   };
-  
+
   /**
    * Set whether users belonging to the given role are allowed
    * to read this object.
-   * 
-   * @param role The name of the role, or a Parse.Role object.
+   *
+   * @param role The name of the role, or a AV.Role object.
    * @param {Boolean} allowed Whether the given role can read this object.
-   * @throws {String} If role is neither a Parse.Role nor a String.
+   * @throws {String} If role is neither a AV.Role nor a String.
    */
-  Parse.ACL.prototype.setRoleReadAccess = function(role, allowed) {
-    if (role instanceof Parse.Role) {
+  AV.ACL.prototype.setRoleReadAccess = function(role, allowed) {
+    if (role instanceof AV.Role) {
       // Normalize to the String name
       role = role.getName();
     }
@@ -2884,19 +2779,19 @@
       this.setReadAccess("role:" + role, allowed);
       return;
     }
-    throw "role must be a Parse.Role or a String";
+    throw "role must be a AV.Role or a String";
   };
-  
+
   /**
    * Set whether users belonging to the given role are allowed
    * to write this object.
-   * 
-   * @param role The name of the role, or a Parse.Role object.
+   *
+   * @param role The name of the role, or a AV.Role object.
    * @param {Boolean} allowed Whether the given role can write this object.
-   * @throws {String} If role is neither a Parse.Role nor a String.
+   * @throws {String} If role is neither a AV.Role nor a String.
    */
-  Parse.ACL.prototype.setRoleWriteAccess = function(role, allowed) {
-    if (role instanceof Parse.Role) {
+  AV.ACL.prototype.setRoleWriteAccess = function(role, allowed) {
+    if (role instanceof AV.Role) {
       // Normalize to the String name
       role = role.getName();
     }
@@ -2904,58 +2799,58 @@
       this.setWriteAccess("role:" + role, allowed);
       return;
     }
-    throw "role must be a Parse.Role or a String";
+    throw "role must be a AV.Role or a String";
   };
 
 }(this));
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * @class
-   * A Parse.Op is an atomic operation that can be applied to a field in a
-   * Parse.Object. For example, calling <code>object.set("foo", "bar")</code>
-   * is an example of a Parse.Op.Set. Calling <code>object.unset("foo")</code>
-   * is a Parse.Op.Unset. These operations are stored in a Parse.Object and
+   * A AV.Op is an atomic operation that can be applied to a field in a
+   * AV.Object. For example, calling <code>object.set("foo", "bar")</code>
+   * is an example of a AV.Op.Set. Calling <code>object.unset("foo")</code>
+   * is a AV.Op.Unset. These operations are stored in a AV.Object and
    * sent to the server as part of <code>object.save()</code> operations.
-   * Instances of Parse.Op should be immutable.
+   * Instances of AV.Op should be immutable.
    *
-   * You should not create subclasses of Parse.Op or instantiate Parse.Op
+   * You should not create subclasses of AV.Op or instantiate AV.Op
    * directly.
    */
-  Parse.Op = function() {
+  AV.Op = function() {
     this._initialize.apply(this, arguments);
   };
 
-  Parse.Op.prototype = {
+  AV.Op.prototype = {
     _initialize: function() {}
   };
 
-  _.extend(Parse.Op, {
+  _.extend(AV.Op, {
     /**
-     * To create a new Op, call Parse.Op._extend();
+     * To create a new Op, call AV.Op._extend();
      */
-    _extend: Parse._extend,
+    _extend: AV._extend,
 
     // A map of __op string to decoder function.
     _opDecoderMap: {},
 
     /**
      * Registers a function to convert a json object with an __op field into an
-     * instance of a subclass of Parse.Op.
+     * instance of a subclass of AV.Op.
      */
     _registerDecoder: function(opName, decoder) {
-      Parse.Op._opDecoderMap[opName] = decoder;
+      AV.Op._opDecoderMap[opName] = decoder;
     },
 
     /**
-     * Converts a json object into an instance of a subclass of Parse.Op.
+     * Converts a json object into an instance of a subclass of AV.Op.
      */
     _decode: function(json) {
-      var decoder = Parse.Op._opDecoderMap[json.__op];
+      var decoder = AV.Op._opDecoderMap[json.__op];
       if (decoder) {
         return decoder(json);
       } else {
@@ -2967,10 +2862,10 @@
   /*
    * Add a handler for Batch ops.
    */
-  Parse.Op._registerDecoder("Batch", function(json) {
+  AV.Op._registerDecoder("Batch", function(json) {
     var op = null;
-    Parse._arrayEach(json.ops, function(nextOp) {
-      nextOp = Parse.Op._decode(nextOp);
+    AV._arrayEach(json.ops, function(nextOp) {
+      nextOp = AV.Op._decode(nextOp);
       op = nextOp._mergeWithPrevious(op);
     });
     return op;
@@ -2979,10 +2874,10 @@
   /**
    * @class
    * A Set operation indicates that either the field was changed using
-   * Parse.Object.set, or it is a mutable container that was detected as being
+   * AV.Object.set, or it is a mutable container that was detected as being
    * changed.
    */
-  Parse.Op.Set = Parse.Op._extend(/** @lends Parse.Op.Set.prototype */ {
+  AV.Op.Set = AV.Op._extend(/** @lends AV.Op.Set.prototype */ {
     _initialize: function(value) {
       this._value = value;
     },
@@ -2995,11 +2890,11 @@
     },
 
     /**
-     * Returns a JSON version of the operation suitable for sending to Parse.
+     * Returns a JSON version of the operation suitable for sending to AV.
      * @return {Object}
      */
     toJSON: function() {
-      return Parse._encode(this.value());
+      return AV._encode(this.value());
     },
 
     _mergeWithPrevious: function(previous) {
@@ -3012,20 +2907,20 @@
   });
 
   /**
-   * A sentinel value that is returned by Parse.Op.Unset._estimate to
+   * A sentinel value that is returned by AV.Op.Unset._estimate to
    * indicate the field should be deleted. Basically, if you find _UNSET as a
    * value in your object, you should remove that key.
    */
-  Parse.Op._UNSET = {};
+  AV.Op._UNSET = {};
 
   /**
    * @class
    * An Unset operation indicates that this field has been deleted from the
    * object.
    */
-  Parse.Op.Unset = Parse.Op._extend(/** @lends Parse.Op.Unset.prototype */ {
+  AV.Op.Unset = AV.Op._extend(/** @lends AV.Op.Unset.prototype */ {
     /**
-     * Returns a JSON version of the operation suitable for sending to Parse.
+     * Returns a JSON version of the operation suitable for sending to AV.
      * @return {Object}
      */
     toJSON: function() {
@@ -3037,12 +2932,12 @@
     },
 
     _estimate: function(oldValue) {
-      return Parse.Op._UNSET;
+      return AV.Op._UNSET;
     }
   });
 
-  Parse.Op._registerDecoder("Delete", function(json) {
-    return new Parse.Op.Unset();
+  AV.Op._registerDecoder("Delete", function(json) {
+    return new AV.Op.Unset();
   });
 
   /**
@@ -3050,8 +2945,8 @@
    * An Increment is an atomic operation where the numeric value for the field
    * will be increased by a given amount.
    */
-  Parse.Op.Increment = Parse.Op._extend(
-      /** @lends Parse.Op.Increment.prototype */ {
+  AV.Op.Increment = AV.Op._extend(
+      /** @lends AV.Op.Increment.prototype */ {
 
     _initialize: function(amount) {
       this._amount = amount;
@@ -3066,7 +2961,7 @@
     },
 
     /**
-     * Returns a JSON version of the operation suitable for sending to Parse.
+     * Returns a JSON version of the operation suitable for sending to AV.
      * @return {Object}
      */
     toJSON: function() {
@@ -3076,12 +2971,12 @@
     _mergeWithPrevious: function(previous) {
       if (!previous) {
         return this;
-      } else if (previous instanceof Parse.Op.Unset) {
-        return new Parse.Op.Set(this.amount());
-      } else if (previous instanceof Parse.Op.Set) {
-        return new Parse.Op.Set(previous.value() + this.amount());
-      } else if (previous instanceof Parse.Op.Increment) {
-        return new Parse.Op.Increment(this.amount() + previous.amount());
+      } else if (previous instanceof AV.Op.Unset) {
+        return new AV.Op.Set(this.amount());
+      } else if (previous instanceof AV.Op.Set) {
+        return new AV.Op.Set(previous.value() + this.amount());
+      } else if (previous instanceof AV.Op.Increment) {
+        return new AV.Op.Increment(this.amount() + previous.amount());
       } else {
         throw "Op is invalid after previous op.";
       }
@@ -3095,8 +2990,8 @@
     }
   });
 
-  Parse.Op._registerDecoder("Increment", function(json) {
-    return new Parse.Op.Increment(json.amount);
+  AV.Op._registerDecoder("Increment", function(json) {
+    return new AV.Op.Increment(json.amount);
   });
 
   /**
@@ -3104,7 +2999,7 @@
    * Add is an atomic operation where the given objects will be appended to the
    * array that is stored in this field.
    */
-  Parse.Op.Add = Parse.Op._extend(/** @lends Parse.Op.Add.prototype */ {
+  AV.Op.Add = AV.Op._extend(/** @lends AV.Op.Add.prototype */ {
     _initialize: function(objects) {
       this._objects = objects;
     },
@@ -3118,22 +3013,22 @@
     },
 
     /**
-     * Returns a JSON version of the operation suitable for sending to Parse.
+     * Returns a JSON version of the operation suitable for sending to AV.
      * @return {Object}
      */
     toJSON: function() {
-      return { __op: "Add", objects: Parse._encode(this.objects()) };
+      return { __op: "Add", objects: AV._encode(this.objects()) };
     },
 
     _mergeWithPrevious: function(previous) {
       if (!previous) {
         return this;
-      } else if (previous instanceof Parse.Op.Unset) {
-        return new Parse.Op.Set(this.objects());
-      } else if (previous instanceof Parse.Op.Set) {
-        return new Parse.Op.Set(this._estimate(previous.value()));
-      } else if (previous instanceof Parse.Op.Add) {
-        return new Parse.Op.Add(previous.objects().concat(this.objects()));
+      } else if (previous instanceof AV.Op.Unset) {
+        return new AV.Op.Set(this.objects());
+      } else if (previous instanceof AV.Op.Set) {
+        return new AV.Op.Set(this._estimate(previous.value()));
+      } else if (previous instanceof AV.Op.Add) {
+        return new AV.Op.Add(previous.objects().concat(this.objects()));
       } else {
         throw "Op is invalid after previous op.";
       }
@@ -3148,8 +3043,8 @@
     }
   });
 
-  Parse.Op._registerDecoder("Add", function(json) {
-    return new Parse.Op.Add(Parse._decode(undefined, json.objects));
+  AV.Op._registerDecoder("Add", function(json) {
+    return new AV.Op.Add(AV._decode(undefined, json.objects));
   });
 
   /**
@@ -3158,8 +3053,8 @@
    * the array that is stored in this field only if they were not already
    * present in the array.
    */
-  Parse.Op.AddUnique = Parse.Op._extend(
-      /** @lends Parse.Op.AddUnique.prototype */ {
+  AV.Op.AddUnique = AV.Op._extend(
+      /** @lends AV.Op.AddUnique.prototype */ {
 
     _initialize: function(objects) {
       this._objects = _.uniq(objects);
@@ -3174,22 +3069,22 @@
     },
 
     /**
-     * Returns a JSON version of the operation suitable for sending to Parse.
+     * Returns a JSON version of the operation suitable for sending to AV.
      * @return {Object}
      */
     toJSON: function() {
-      return { __op: "AddUnique", objects: Parse._encode(this.objects()) };
+      return { __op: "AddUnique", objects: AV._encode(this.objects()) };
     },
 
     _mergeWithPrevious: function(previous) {
       if (!previous) {
         return this;
-      } else if (previous instanceof Parse.Op.Unset) {
-        return new Parse.Op.Set(this.objects());
-      } else if (previous instanceof Parse.Op.Set) {
-        return new Parse.Op.Set(this._estimate(previous.value()));
-      } else if (previous instanceof Parse.Op.AddUnique) {
-        return new Parse.Op.AddUnique(this._estimate(previous.objects()));
+      } else if (previous instanceof AV.Op.Unset) {
+        return new AV.Op.Set(this.objects());
+      } else if (previous instanceof AV.Op.Set) {
+        return new AV.Op.Set(this._estimate(previous.value()));
+      } else if (previous instanceof AV.Op.AddUnique) {
+        return new AV.Op.AddUnique(this._estimate(previous.objects()));
       } else {
         throw "Op is invalid after previous op.";
       }
@@ -3203,10 +3098,10 @@
         // this.objects, because the uniqueness may not apply to oldValue
         // (especially if the oldValue was set via .set())
         var newValue = _.clone(oldValue);
-        Parse._arrayEach(this.objects(), function(obj) {
-          if (obj instanceof Parse.Object && obj.id) {
+        AV._arrayEach(this.objects(), function(obj) {
+          if (obj instanceof AV.Object && obj.id) {
             var matchingObj = _.find(newValue, function(anObj) {
-              return (anObj instanceof Parse.Object) && (anObj.id === obj.id);
+              return (anObj instanceof AV.Object) && (anObj.id === obj.id);
             });
             if (!matchingObj) {
               newValue.push(obj);
@@ -3223,8 +3118,8 @@
     }
   });
 
-  Parse.Op._registerDecoder("AddUnique", function(json) {
-    return new Parse.Op.AddUnique(Parse._decode(undefined, json.objects));
+  AV.Op._registerDecoder("AddUnique", function(json) {
+    return new AV.Op.AddUnique(AV._decode(undefined, json.objects));
   });
 
   /**
@@ -3232,7 +3127,7 @@
    * Remove is an atomic operation where the given objects will be removed from
    * the array that is stored in this field.
    */
-  Parse.Op.Remove = Parse.Op._extend(/** @lends Parse.Op.Remove.prototype */ {
+  AV.Op.Remove = AV.Op._extend(/** @lends AV.Op.Remove.prototype */ {
     _initialize: function(objects) {
       this._objects = _.uniq(objects);
     },
@@ -3246,22 +3141,22 @@
     },
 
     /**
-     * Returns a JSON version of the operation suitable for sending to Parse.
+     * Returns a JSON version of the operation suitable for sending to AV.
      * @return {Object}
      */
     toJSON: function() {
-      return { __op: "Remove", objects: Parse._encode(this.objects()) };
+      return { __op: "Remove", objects: AV._encode(this.objects()) };
     },
 
     _mergeWithPrevious: function(previous) {
       if (!previous) {
         return this;
-      } else if (previous instanceof Parse.Op.Unset) {
+      } else if (previous instanceof AV.Op.Unset) {
         return previous;
-      } else if (previous instanceof Parse.Op.Set) {
-        return new Parse.Op.Set(this._estimate(previous.value()));
-      } else if (previous instanceof Parse.Op.Remove) {
-        return new Parse.Op.Remove(_.union(previous.objects(), this.objects()));
+      } else if (previous instanceof AV.Op.Set) {
+        return new AV.Op.Set(this._estimate(previous.value()));
+      } else if (previous instanceof AV.Op.Remove) {
+        return new AV.Op.Remove(_.union(previous.objects(), this.objects()));
       } else {
         throw "Op is invalid after previous op.";
       }
@@ -3272,11 +3167,11 @@
         return [];
       } else {
         var newValue = _.difference(oldValue, this.objects());
-        // If there are saved Parse Objects being removed, also remove them.
-        Parse._arrayEach(this.objects(), function(obj) {
-          if (obj instanceof Parse.Object && obj.id) {
+        // If there are saved AV Objects being removed, also remove them.
+        AV._arrayEach(this.objects(), function(obj) {
+          if (obj instanceof AV.Object && obj.id) {
             newValue = _.reject(newValue, function(other) {
-              return (other instanceof Parse.Object) && (other.id === obj.id);
+              return (other instanceof AV.Object) && (other.id === obj.id);
             });
           }
         });
@@ -3285,18 +3180,18 @@
     }
   });
 
-  Parse.Op._registerDecoder("Remove", function(json) {
-    return new Parse.Op.Remove(Parse._decode(undefined, json.objects));
+  AV.Op._registerDecoder("Remove", function(json) {
+    return new AV.Op.Remove(AV._decode(undefined, json.objects));
   });
 
   /**
    * @class
    * A Relation operation indicates that the field is an instance of
-   * Parse.Relation, and objects are being added to, or removed from, that
+   * AV.Relation, and objects are being added to, or removed from, that
    * relation.
    */
-  Parse.Op.Relation = Parse.Op._extend(
-      /** @lends Parse.Op.Relation.prototype */ {
+  AV.Op.Relation = AV.Op._extend(
+      /** @lends AV.Op.Relation.prototype */ {
 
     _initialize: function(adds, removes) {
       this._targetClassName = null;
@@ -3304,15 +3199,15 @@
       var self = this;
 
       var pointerToId = function(object) {
-        if (object instanceof Parse.Object) {
+        if (object instanceof AV.Object) {
           if (!object.id) {
-            throw "You can't add an unsaved Parse.Object to a relation.";
+            throw "You can't add an unsaved AV.Object to a relation.";
           }
           if (!self._targetClassName) {
             self._targetClassName = object.className;
           }
           if (self._targetClassName !== object.className) {
-            throw "Tried to create a Parse.Relation with 2 different types: " +
+            throw "Tried to create a AV.Relation with 2 different types: " +
                   self._targetClassName + " and " + object.className + ".";
           }
           return object.id;
@@ -3325,35 +3220,35 @@
     },
 
     /**
-     * Returns an array of unfetched Parse.Object that are being added to the
+     * Returns an array of unfetched AV.Object that are being added to the
      * relation.
      * @return {Array}
      */
     added: function() {
       var self = this;
       return _.map(this.relationsToAdd, function(objectId) {
-        var object = Parse.Object._create(self._targetClassName);
+        var object = AV.Object._create(self._targetClassName);
         object.id = objectId;
         return object;
       });
     },
 
     /**
-     * Returns an array of unfetched Parse.Object that are being removed from
+     * Returns an array of unfetched AV.Object that are being removed from
      * the relation.
      * @return {Array}
      */
     removed: function() {
       var self = this;
       return _.map(this.relationsToRemove, function(objectId) {
-        var object = Parse.Object._create(self._targetClassName);
+        var object = AV.Object._create(self._targetClassName);
         object.id = objectId;
         return object;
       });
     },
 
     /**
-     * Returns a JSON version of the operation suitable for sending to Parse.
+     * Returns a JSON version of the operation suitable for sending to AV.
      * @return {Object}
      */
     toJSON: function() {
@@ -3386,9 +3281,9 @@
     _mergeWithPrevious: function(previous) {
       if (!previous) {
         return this;
-      } else if (previous instanceof Parse.Op.Unset) {
+      } else if (previous instanceof AV.Op.Unset) {
         throw "You can't modify a relation after deleting it.";
-      } else if (previous instanceof Parse.Op.Relation) {
+      } else if (previous instanceof AV.Op.Relation) {
         if (previous._targetClassName &&
             previous._targetClassName !== this._targetClassName) {
           throw "Related object must be of class " + previous._targetClassName +
@@ -3401,7 +3296,7 @@
                                              this.relationsToAdd),
                                 this.relationsToRemove);
 
-        var newRelation = new Parse.Op.Relation(newAdd, newRemove);
+        var newRelation = new AV.Op.Relation(newAdd, newRemove);
         newRelation._targetClassName = this._targetClassName;
         return newRelation;
       } else {
@@ -3411,9 +3306,9 @@
 
     _estimate: function(oldValue, object, key) {
       if (!oldValue) {
-        var relation = new Parse.Relation(object, key);
+        var relation = new AV.Relation(object, key);
         relation.targetClassName = this._targetClassName;
-      } else if (oldValue instanceof Parse.Relation) {
+      } else if (oldValue instanceof AV.Relation) {
         if (this._targetClassName) {
           if (oldValue.targetClassName) {
             if (oldValue.targetClassName !== this._targetClassName) {
@@ -3431,42 +3326,42 @@
     }
   });
 
-  Parse.Op._registerDecoder("AddRelation", function(json) {
-    return new Parse.Op.Relation(Parse._decode(undefined, json.objects), []);
+  AV.Op._registerDecoder("AddRelation", function(json) {
+    return new AV.Op.Relation(AV._decode(undefined, json.objects), []);
   });
-  Parse.Op._registerDecoder("RemoveRelation", function(json) {
-    return new Parse.Op.Relation([], Parse._decode(undefined, json.objects));
+  AV.Op._registerDecoder("RemoveRelation", function(json) {
+    return new AV.Op.Relation([], AV._decode(undefined, json.objects));
   });
 
 }(this));
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * Creates a new Relation for the given parent object and key. This
    * constructor should rarely be used directly, but rather created by
-   * Parse.Object.relation.
-   * @param {Parse.Object} parent The parent of this relation.
+   * AV.Object.relation.
+   * @param {AV.Object} parent The parent of this relation.
    * @param {String} key The key for this relation on the parent.
-   * @see Parse.Object#relation
+   * @see AV.Object#relation
    * @class
    *
    * <p>
    * A class that is used to access all of the children of a many-to-many
-   * relationship.  Each instance of Parse.Relation is associated with a
+   * relationship.  Each instance of AV.Relation is associated with a
    * particular parent object and key.
    * </p>
    */
-  Parse.Relation = function(parent, key) {
+  AV.Relation = function(parent, key) {
     this.parent = parent;
     this.key = key;
     this.targetClassName = null;
   };
 
-  Parse.Relation.prototype = {
+  AV.Relation.prototype = {
     /**
      * Makes sure that this relation has the right parent and key.
      */
@@ -3482,7 +3377,7 @@
     },
 
     /**
-     * Adds a Parse.Object or an array of Parse.Objects to the relation.
+     * Adds a AV.Object or an array of AV.Objects to the relation.
      * @param {} objects The item or items to add.
      */
     add: function(objects) {
@@ -3490,13 +3385,13 @@
         objects = [objects];
       }
 
-      var change = new Parse.Op.Relation(objects, []);
+      var change = new AV.Op.Relation(objects, []);
       this.parent.set(this.key, change);
       this.targetClassName = change._targetClassName;
     },
 
     /**
-     * Removes a Parse.Object or an array of Parse.Objects from this relation.
+     * Removes a AV.Object or an array of AV.Objects from this relation.
      * @param {} objects The item or items to remove.
      */
     remove: function(objects) {
@@ -3504,7 +3399,7 @@
         objects = [objects];
       }
 
-      var change = new Parse.Op.Relation([], objects);
+      var change = new AV.Op.Relation([], objects);
       this.parent.set(this.key, change);
       this.targetClassName = change._targetClassName;
     },
@@ -3518,20 +3413,20 @@
     },
 
     /**
-     * Returns a Parse.Query that is limited to objects in this
+     * Returns a AV.Query that is limited to objects in this
      * relation.
-     * @return {Parse.Query}
+     * @return {AV.Query}
      */
     query: function() {
       var targetClass;
       var query;
       if (!this.targetClassName) {
-        targetClass = Parse.Object._getSubclass(this.parent.className);
-        query = new Parse.Query(targetClass);
+        targetClass = AV.Object._getSubclass(this.parent.className);
+        query = new AV.Query(targetClass);
         query._extraOptions.redirectClassNameForKey = this.key;
       } else {
-        targetClass = Parse.Object._getSubclass(this.targetClassName);
-        query = new Parse.Query(targetClass);
+        targetClass = AV.Object._getSubclass(this.targetClassName);
+        query = new AV.Query(targetClass);
       }
       query._addCondition("$relatedTo", "object", this.parent._toPointer());
       query._addCondition("$relatedTo", "key", this.key);
@@ -3542,16 +3437,16 @@
 }(this));
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * A Promise is returned by async methods as a hook to provide callbacks to be
    * called when the async task is fulfilled.
    *
    * <p>Typical usage would be like:<pre>
-   *    query.find().then(function(results) {
+   *    query.findAsync().then(function(results) {
    *      results[0].set("foo", "bar");
    *      return results[0].saveAsync();
    *    }).then(function(result) {
@@ -3559,17 +3454,17 @@
    *    });
    * </pre></p>
    *
-   * @see Parse.Promise.prototype.then
+   * @see AV.Promise.prototype.next
    * @class
    */
-  Parse.Promise = function() {
+  AV.Promise = function() {
     this._resolved = false;
     this._rejected = false;
     this._resolvedCallbacks = [];
     this._rejectedCallbacks = [];
   };
 
-  _.extend(Parse.Promise, /** @lends Parse.Promise */ {
+  _.extend(AV.Promise, /** @lends AV.Promise */ {
 
     /**
      * Returns true iff the given object fulfils the Promise interface.
@@ -3581,20 +3476,20 @@
 
     /**
      * Returns a new promise that is resolved with a given value.
-     * @return {Parse.Promise} the new promise.
+     * @return {AV.Promise} the new promise.
      */
     as: function() {
-      var promise = new Parse.Promise();
+      var promise = new AV.Promise();
       promise.resolve.apply(promise, arguments);
       return promise;
     },
 
     /**
      * Returns a new promise that is rejected with a given error.
-     * @return {Parse.Promise} the new promise.
+     * @return {AV.Promise} the new promise.
      */
     error: function() {
-      var promise = new Parse.Promise();
+      var promise = new AV.Promise();
       promise.reject.apply(promise, arguments);
       return promise;
     },
@@ -3603,33 +3498,15 @@
      * Returns a new promise that is fulfilled when all of the input promises
      * are resolved. If any promise in the list fails, then the returned promise
      * will fail with the last error. If they all succeed, then the returned
-     * promise will succeed, with the results being the results of all the input
-     * promises. For example: <pre>
-     *   var p1 = Parse.Promise.as(1);
-     *   var p2 = Parse.Promise.as(2);
-     *   var p3 = Parse.Promise.as(3);
-     *
-     *   Parse.Promise.when(p1, p2, p3).then(function(r1, r2, r3) {
-     *     console.log(r1);  // prints 1
-     *     console.log(r2);  // prints 2
-     *     console.log(r3);  // prints 3
-     *   });</pre>
-     *
-     * The input promises can also be specified as an array: <pre>
-     *   var promises = [p1, p2, p3];
-     *   Parse.Promise.when(promises).then(function(r1, r2, r3) {
-     *     console.log(r1);  // prints 1
-     *     console.log(r2);  // prints 2
-     *     console.log(r3);  // prints 3
-     *   });
-     * </pre>
+     * promise will succeed, with the result being an array with the results of
+     * all the input promises.
      * @param {Array} promises a list of promises to wait for.
-     * @return {Parse.Promise} the new promise.
+     * @return {AV.Promise} the new promise.
      */
     when: function(promises) {
       // Allow passing in Promises as separate arguments instead of an Array.
       var objects;
-      if (promises && Parse._isNullOrUndefined(promises.length)) {
+      if (promises && AV._isNullOrUndefined(promises.length)) {
         objects = arguments;
       } else {
         objects = promises;
@@ -3643,10 +3520,10 @@
       errors.length = objects.length;
 
       if (total === 0) {
-        return Parse.Promise.as.apply(this, results);
+        return AV.Promise.as.apply(this, results);
       }
 
-      var promise = new Parse.Promise();
+      var promise = new AV.Promise();
 
       var resolveOne = function() {
         total = total - 1;
@@ -3659,8 +3536,8 @@
         }
       };
 
-      Parse._arrayEach(objects, function(object, i) {
-        if (Parse.Promise.is(object)) {
+      AV._arrayEach(objects, function(object, i) {
+        if (AV.Promise.is(object)) {
           object.then(function(result) {
             results[i] = result;
             resolveOne();
@@ -3688,14 +3565,14 @@
     _continueWhile: function(predicate, asyncFunction) {
       if (predicate()) {
         return asyncFunction().then(function() {
-          return Parse.Promise._continueWhile(predicate, asyncFunction);
+          return AV.Promise._continueWhile(predicate, asyncFunction);
         });
       }
-      return Parse.Promise.as();
+      return AV.Promise.as();
     }
   });
 
-  _.extend(Parse.Promise.prototype, /** @lends Parse.Promise.prototype */ {
+  _.extend(AV.Promise.prototype, /** @lends AV.Promise.prototype */ {
 
     /**
      * Marks this promise as fulfilled, firing any callbacks waiting on it.
@@ -3709,7 +3586,7 @@
       this._resolved = true;
       this._result = arguments;
       var results = arguments;
-      Parse._arrayEach(this._resolvedCallbacks, function(resolvedCallback) {
+      AV._arrayEach(this._resolvedCallbacks, function(resolvedCallback) {
         resolvedCallback.apply(this, results);
       });
       this._resolvedCallbacks = [];
@@ -3727,7 +3604,7 @@
       }
       this._rejected = true;
       this._error = error;
-      Parse._arrayEach(this._rejectedCallbacks, function(rejectedCallback) {
+      AV._arrayEach(this._rejectedCallbacks, function(rejectedCallback) {
         rejectedCallback(error);
       });
       this._resolvedCallbacks = [];
@@ -3748,20 +3625,20 @@
      * the promise returned by "then" with be resolved successfully. If
      * rejectedCallback is null, or it returns a rejected Promise, then the
      * Promise returned by "then" will be rejected with that error.
-     * @return {Parse.Promise} A new Promise that will be fulfilled after this
+     * @return {AV.Promise} A new Promise that will be fulfilled after this
      * Promise is fulfilled and either callback has completed. If the callback
      * returned a Promise, then this Promise will not be fulfilled until that
      * one is.
      */
     then: function(resolvedCallback, rejectedCallback) {
-      var promise = new Parse.Promise();
+      var promise = new AV.Promise();
 
       var wrappedResolvedCallback = function() {
         var result = arguments;
         if (resolvedCallback) {
           result = [resolvedCallback.apply(this, result)];
         }
-        if (result.length === 1 && Parse.Promise.is(result[0])) {
+        if (result.length === 1 && AV.Promise.is(result[0])) {
           result[0].then(function() {
             promise.resolve.apply(promise, arguments);
           }, function(error) {
@@ -3776,7 +3653,7 @@
         var result = [];
         if (rejectedCallback) {
           result = [rejectedCallback(error)];
-          if (result.length === 1 && Parse.Promise.is(result[0])) {
+          if (result.length === 1 && AV.Promise.is(result[0])) {
             result[0].then(function() {
               promise.resolve.apply(promise, arguments);
             }, function(error) {
@@ -3805,35 +3682,13 @@
     },
 
     /**
-     * Add handlers to be called when the promise 
-     * is either resolved or rejected
-     */
-    always: function(callback) {
-      return this.then(callback, callback);
-    },
-
-    /**
-     * Add handlers to be called when the Promise object is resolved
-     */
-    done: function(callback) {
-      return this.then(callback);
-    },
-
-    /**
-     * Add handlers to be called when the Promise object is rejected
-     */
-    fail: function(callback) {
-      return this.then(null, callback);
-    },
-
-    /**
      * Run the given callbacks after this promise is fulfilled.
      * @param optionsOrCallback {} A Backbone-style options callback, or a
      * callback function. If this is an options object and contains a "model"
      * attributes, that will be passed to error callbacks as the first argument.
      * @param model {} If truthy, this will be passed as the first result of
      * error callbacks. This is for Backbone-compatability.
-     * @return {Parse.Promise} A promise that will be resolved after the
+     * @return {AV.Promise} A promise that will be resolved after the
      * callbacks are run, with the same result as this.
      */
     _thenRunCallbacks: function(optionsOrCallback, model) {
@@ -3860,7 +3715,7 @@
           // When there's no callback, a sync event should be triggered.
           model.trigger('sync', model, result, options);
         }
-        return Parse.Promise.as.apply(Parse.Promise, arguments);
+        return AV.Promise.as.apply(AV.Promise, arguments);
       }, function(error) {
         if (options.error) {
           if (!_.isUndefined(model)) {
@@ -3874,7 +3729,7 @@
         }
         // By explicitly returning a rejected Promise, this will work with
         // either jQuery or Promises/A semantics.
-        return Parse.Promise.error(error);
+        return AV.Promise.error(error);
       });
     },
 
@@ -3900,9 +3755,9 @@
 
 /*jshint bitwise:false *//*global FileReader: true, File: true */
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   var b64Digit = function(number) {
     if (number < 26) {
@@ -3944,7 +3799,7 @@
     return chunks.join("");
   };
 
-  
+
   // A list of file extensions to mime types as found here:
   // http://stackoverflow.com/questions/58510/using-net-how-can-you-find-the-
   //     mime-type-of-a-file-based-on-the-file-signature
@@ -4052,7 +3907,7 @@
     pgn: "application/x-chess-pgn",
     pic: "image/pict",
     pict: "image/pict",
-    png: "image/png", 
+    png: "image/png",
     pnm: "image/x-portable-anymap",
     pnt: "image/x-macpaint",
     pntg: "image/x-macpaint",
@@ -4149,33 +4004,29 @@
    * Reads a File using a FileReader.
    * @param file {File} the File to read.
    * @param type {String} (optional) the mimetype to override with.
-   * @return {Parse.Promise} A Promise that will be fulfilled with a
+   * @return {AV.Promise} A Promise that will be fulfilled with a
    *     base64-encoded string of the data and its mime type.
    */
   var readAsync = function(file, type) {
-    var promise = new Parse.Promise();
+    var promise = new AV.Promise();
 
     if (typeof(FileReader) === "undefined") {
-      return Parse.Promise.error(new Parse.Error(
-          Parse.Error.FILE_READ_ERROR,
-          "Attempted to use a FileReader on an unsupported browser."));
+      return AV.Promise.error(new AV.Error(
+          -1, "Attempted to use a FileReader on an unsupported browser."));
     }
 
     var reader = new FileReader();
     reader.onloadend = function() {
       if (reader.readyState !== 2) {
-        promise.reject(new Parse.Error(
-            Parse.Error.FILE_READ_ERROR,
-            "Error reading file."));
+        promise.reject(new AV.Error(-1, "Error reading file."));
         return;
       }
 
       var dataURL = reader.result;
       var matches = /^data:([^;]*);base64,(.*)$/.exec(dataURL);
       if (!matches) {
-        promise.reject(new Parse.Error(
-            Parse.ERROR.FILE_READ_ERROR,
-            "Unable to interpret data URL: " + dataURL));
+        promise.reject(
+            new AV.Error(-1, "Unable to interpret data URL: " + dataURL));
         return;
       }
 
@@ -4186,36 +4037,38 @@
   };
 
   /**
-   * A Parse.File is a local representation of a file that is saved to the Parse
+   * A AV.File is a local representation of a file that is saved to the AV
    * cloud.
-   * @class
-   * @param name {String} The file's name. This will be prefixed by a unique
-   *     value once the file has finished saving. The file name must begin with
-   *     an alphanumeric character, and consist of alphanumeric characters,
-   *     periods, spaces, underscores, or dashes.
+   * @param name {String} The file's name. This will change to a unique value
+   *     once the file has finished saving.
    * @param data {Array} The data for the file, as either:
    *     1. an Array of byte value Numbers, or
    *     2. an Object like { base64: "..." } with a base64-encoded String.
    *     3. a File object selected with a file upload control. (3) only works
    *        in Firefox 3.6+, Safari 6.0.2+, Chrome 7+, and IE 10+.
    *        For example:<pre>
+   *     4.a Buffer object in Node.js runtime.
    * var fileUploadControl = $("#profilePhotoFileUpload")[0];
    * if (fileUploadControl.files.length > 0) {
    *   var file = fileUploadControl.files[0];
    *   var name = "photo.jpg";
-   *   var parseFile = new Parse.File(name, file);
+   *   var parseFile = new AV.File(name, file);
    *   parseFile.save().then(function() {
-   *     // The file has been saved to Parse.
+   *     // The file has been saved to AV.
    *   }, function(error) {
-   *     // The file either could not be read, or could not be saved to Parse.
+   *     // The file either could not be read, or could not be saved to AV.
    *   });
    * }</pre>
    * @param type {String} Optional Content-Type header to use for the file. If
    *     this is omitted, the content type will be inferred from the name's
    *     extension.
    */
-  Parse.File = function(name, data, type) {
+  AV.File = function(name, data, type) {
     this._name = name;
+    var currentUser = AV.User.current();
+    this._metaData = {
+       owner: (currentUser !=null ? currentUser.id : 'unknown')
+    };
 
     // Guess the content type from the extension if we need to.
     var extension = /\.([^.]*)$/.exec(name);
@@ -4225,30 +4078,21 @@
     var guessedType = type || mimeTypes[extension] || "text/plain";
 
     if (_.isArray(data)) {
-      this._source = Parse.Promise.as(encodeBase64(data), guessedType);
+      this._source = AV.Promise.as(encodeBase64(data), guessedType);
+      this._metaData.size = data.length;
     } else if (data && data.base64) {
-      // if it contains data uri, extract based64 and the type out of it.
-      /*jslint maxlen: 1000*/
-      var dataUriRegexp = /^data:([a-zA-Z]*\/[a-zA-Z+.-]*);(charset=[a-zA-Z0-9\-\/\s]*,)?base64,(\S+)/;
-      /*jslint maxlen: 80*/
-
-      var matches = dataUriRegexp.exec(data.base64);
-      if (matches && matches.length > 0) {
-        // if data URI with charset, there will have 4 matches.
-        this._source = Parse.Promise.as(
-          (matches.length === 4 ? matches[3] : matches[2]), matches[1]
-        );
-      } else {
-        this._source = Parse.Promise.as(data.base64, guessedType);
-      }
+      this._source = AV.Promise.as(data.base64, guessedType);
+      this._metaData.size = data.base64.length;
     } else if (typeof(File) !== "undefined" && data instanceof File) {
       this._source = readAsync(data, type);
+    } else if(AV._isNode && Buffer.isBuffer(data)) {
+       this._source = AV.Promise.as(data.toString('base64'));
     } else if (_.isString(data)) {
-      throw "Creating a Parse.File from a String is not yet supported.";
+      throw "Creating a AV.File from a String is not yet supported.";
     }
   };
 
-  Parse.File.prototype = {
+  AV.File.prototype = {
 
     /**
      * Gets the name of the file. Before save is called, this is the filename
@@ -4261,7 +4105,7 @@
 
     /**
      * Gets the url of the file. It is only available after you save the file or
-     * after you get the file from a Parse.Object.
+     * after you get the file from a AV.Object.
      * @return {String}
      */
     url: function() {
@@ -4269,31 +4113,106 @@
     },
 
     /**
-     * Saves the file to the Parse cloud.
+    * <p>Returns the file's metadata JSON object if no arguments is given.Returns the
+    * metadata value if a key is given.Set metadata value if key and value are both given.</p>
+    * <p><pre>
+    *  var metadata = file.metaData(); //Get metadata JSON object.
+    *  var size = file.metaData('size');  // Get the size metadata value.
+    *  file.metaData('format', 'jpeg'); //set metadata attribute and value.
+    *</pre></p>
+    * @return {Object} The file's metadata JSON object.
+    * @param {String} attr an optional metadata key.
+    * @param {Object} value an optional metadata value.
+    **/
+    metaData: function(attr, value) {
+      if(attr != null && value != null){
+         this._metaData[attr] = value;
+         return this;
+      }else if(attr != null){
+         return this._metaData[attr];
+      }else{
+        return this._metaData;
+      }
+    },
+
+   /**
+    * 如果文件是图片，获取图片的缩略图URL。可以传入宽度、高度、质量、格式等参数。
+    * @return {String} 缩略图URL
+    * @param {Number} width 宽度，单位：像素
+    * @param {Number} heigth 高度，单位：像素
+    * @param {Number} quality 质量，1-100的数字，默认100
+    * @param {Number} scaleToFit 是否将图片自适应大小。默认为true。
+    * @param {String} fmt 格式，默认为png，也可以为jpeg,gif等格式。
+    */
+   thumbnailURL: function(width, height, quality, scaleToFit, fmt){
+     if(!this.url()){
+       throw "Invalid url.";
+     }
+     if(!width || !height || width<=0 || height <=0 ){
+       throw "Invalid width or height value."
+     }
+     quality = quality || 100;
+     scaleToFit = (scaleToFit == null) ? true: scaleToFit;
+     if(quality<=0 || quality>100){
+       throw "Invalid quality value."
+     }
+     fmt = fmt || 'png';
+     var mode = scaleToFit ? 2: 1;
+     return this.url() + '?imageView/' + mode + '/w/' + width + '/h/' + height
+       + '/q/' + quality + '/format/' + fmt;
+   },
+
+    /**
+    * Returns the file's size.
+    * @return {Number} The file's size in bytes.
+    **/
+    size: function(){
+      return this.metaData().size;
+    },
+
+    /**
+     * Returns the file's owner.
+     * @return {String} The file's owner id.
+     */
+    ownerId: function(){
+      return this.metaData().owner;
+    },
+     /**
+     * Destroy the file.
+     * @return {AV.Promise} A promise that is fulfilled when the destroy
+     *     completes.
+     */
+    destroy: function(options){
+      if(!this.id)
+          return;
+      var request = AV._request("files", null, this.id, 'DELETE');
+      return request._thenRunCallbacks(options);
+    },
+
+    /**
+     * Saves the file to the AV cloud.
      * @param {Object} options A Backbone-style options object.
-     * @return {Parse.Promise} Promise that is resolved when the save finishes.
+     * @return {AV.Promise} Promise that is resolved when the save finishes.
      */
     save: function(options) {
-      options= options || {};
-
       var self = this;
       if (!self._previousSave) {
         self._previousSave = self._source.then(function(base64, type) {
           var data = {
             base64: base64,
-            _ContentType: type
+            _ContentType: type,
+            metaData: self._metaData,
           };
-          return Parse._request({
-            route: "files",
-            className: self._name,
-            method: 'POST',
-            data: data,
-            useMasterKey: options.useMasterKey
-          });
+          if(!self._metaData.size){
+            self._metaData.size = base64.length;
+          }
+          return AV._request("files", self._name, null, 'POST', data);
 
         }).then(function(response) {
           self._name = response.name;
           self._url = response.url;
+          self.id = response.objectId;
+          self._metaData.size = response.size;
           return self;
         });
       }
@@ -4303,52 +4222,52 @@
 
 }(this));
 
-// Parse.Object is analogous to the Java ParseObject.
+// AV.Object is analogous to the Java AVObject.
 // It also implements the same interface as a Backbone model.
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * Creates a new model with defined attributes. A client id (cid) is
    * automatically generated and assigned for you.
    *
    * <p>You won't normally call this method directly.  It is recommended that
-   * you use a subclass of <code>Parse.Object</code> instead, created by calling
+   * you use a subclass of <code>AV.Object</code> instead, created by calling
    * <code>extend</code>.</p>
    *
    * <p>However, if you don't want to use a subclass, or aren't sure which
    * subclass is appropriate, you can use this form:<pre>
-   *     var object = new Parse.Object("ClassName");
+   *     var object = new AV.Object("ClassName");
    * </pre>
    * That is basically equivalent to:<pre>
-   *     var MyClass = Parse.Object.extend("ClassName");
+   *     var MyClass = AV.Object.extend("ClassName");
    *     var object = new MyClass();
    * </pre></p>
    *
    * @param {Object} attributes The initial set of data to store in the object.
    * @param {Object} options A set of Backbone-like options for creating the
    *     object.  The only option currently supported is "collection".
-   * @see Parse.Object.extend
+   * @see AV.Object.extend
    *
    * @class
    *
-   * <p>The fundamental unit of Parse data, which implements the Backbone Model
+   * <p>The fundamental unit of AV data, which implements the Backbone Model
    * interface.</p>
    */
-  Parse.Object = function(attributes, options) {
-    // Allow new Parse.Object("ClassName") as a shortcut to _create.
+  AV.Object = function(attributes, options) {
+    // Allow new AV.Object("ClassName") as a shortcut to _create.
     if (_.isString(attributes)) {
-      return Parse.Object._create.apply(this, arguments);
+      return AV.Object._create.apply(this, arguments);
     }
 
     attributes = attributes || {};
     if (options && options.parse) {
       attributes = this.parse(attributes);
     }
-    var defaults = Parse._getValue(this, 'defaults');
+    var defaults = AV._getValue(this, 'defaults');
     if (defaults) {
       attributes = _.extend({}, defaults, attributes);
     }
@@ -4367,7 +4286,7 @@
     this._silent = {};
     this._pending = {};
     if (!this.set(attributes, {silent: true})) {
-      throw new Error("Can't create an invalid Parse.Object");
+      throw new Error("Can't create an invalid AV.Object");
     }
     this.changed = {};
     this._silent = {};
@@ -4378,16 +4297,17 @@
   };
 
   /**
-   * @lends Parse.Object.prototype
-   * @property {String} id The objectId of the Parse Object.
+   * @lends AV.Object.prototype
+   * @property {String} id The objectId of the AV Object.
    */
 
   /**
-   * Saves the given list of Parse.Object.
+   * Saves the given list of AV.Object.
    * If any error is encountered, stops and calls the error handler.
+   * There are two ways you can call this function.
    *
-   * <pre>
-   *   Parse.Object.saveAll([object1, object2, ...], {
+   * The Backbone way:<pre>
+   *   AV.Object.saveAll([object1, object2, ...], {
    *     success: function(list) {
    *       // All the objects were saved.
    *     },
@@ -4396,211 +4316,26 @@
    *     },
    *   });
    * </pre>
+   * A simplified syntax:<pre>
+   *   AV.Object.saveAll([object1, object2, ...], function(list, error) {
+   *     if (list) {
+   *       // All the objects were saved.
+   *     } else {
+   *       // An error occurred.
+   *     }
+   *   });
+   * </pre>
    *
-   * @param {Array} list A list of <code>Parse.Object</code>.
+   * @param {Array} list A list of <code>AV.Object</code>.
    * @param {Object} options A Backbone-style callback object.
-   * Valid options are:<ul>
-   *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-   *     be used for this request.
-   * </ul>
    */
-  Parse.Object.saveAll = function(list, options) {
-    options = options || {};
-    return Parse.Object._deepSaveAsync(list, {
-      useMasterKey: options.useMasterKey
-    })._thenRunCallbacks(options);
+  AV.Object.saveAll = function(list, options) {
+    return AV.Object._deepSaveAsync(list)._thenRunCallbacks(options);
   };
 
-  /**
-   * Destroy the given list of models on the server if it was already persisted.
-   * Optimistically removes each model from its collection, if it has one.
-   * If `wait: true` is passed, waits for the server to respond before removal.
-   *
-   * <p>Unlike saveAll, if an error occurs while deleting an individual model,
-   * this method will continue trying to delete the rest of the models if
-   * possible, except in the case of a fatal error like a connection error.
-   *
-   * <p>In particular, the Parse.Error object returned in the case of error may
-   * be one of two types:
-   *
-   * <ul>
-   *   <li>A Parse.Error.AGGREGATE_ERROR. This object's "errors" property is an
-   *       array of other Parse.Error objects. Each error object in this array
-   *       has an "object" property that references the object that could not be
-   *       deleted (for instance, because that object could not be found).</li>
-   *   <li>A non-aggregate Parse.Error. This indicates a serious error that 
-   *       caused the delete operation to be aborted partway through (for 
-   *       instance, a connection failure in the middle of the delete).</li>
-   * </ul>
-   *
-   * <pre>
-   *   Parse.Object.destroyAll([object1, object2, ...], {
-   *     success: function() {
-   *       // All the objects were deleted.
-   *     },
-   *     error: function(error) {
-   *       // An error occurred while deleting one or more of the objects.
-   *       // If this is an aggregate error, then we can inspect each error
-   *       // object individually to determine the reason why a particular
-   *       // object was not deleted.
-   *       if (error.code == Parse.Error.AGGREGATE_ERROR) {
-   *         for (var i = 0; i < error.errors.length; i++) {
-   *           console.log("Couldn't delete " + error.errors[i].object.id + 
-   *             "due to " + error.errors[i].message);
-   *         }
-   *       } else {
-   *         console.log("Delete aborted because of " + error.message);
-   *       }
-   *     },
-   *   });
-   * </pre>
-   *
-   * @param {Array} list A list of <code>Parse.Object</code>.
-   * @param {Object} options A Backbone-style callback object.
-   * Valid options are:<ul>
-   *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-   *     be used for this request.
-   * </ul>
-   */
-  Parse.Object.destroyAll = function(list, options) {
-    options = options || {};
-
-    var triggerDestroy = function(object) {
-      object.trigger('destroy', object, object.collection, options);
-    };
-
-    var errors = [];
-    var destroyBatch = function(batch) {
-      var promise = Parse.Promise.as();
-
-      if (batch.length > 0) {
-        promise = promise.then(function() {
-          return Parse._request({
-            route: "batch",
-            method: "POST",
-            useMasterKey: options.useMasterKey,
-            data: {
-              requests: _.map(batch, function(object) {
-                return {
-                  method: "DELETE",
-                  path: "/1/classes/" + object.className + "/" + object.id
-                };
-              })
-            }
-          });
-        }).then(function(responses, status, xhr) {
-          Parse._arrayEach(batch, function(object, i) {
-            if (responses[i].success && options.wait) {
-              triggerDestroy(object);
-            } else if (responses[i].error) {
-              var error = new Parse.Error(responses[i].error.code,
-                                          responses[i].error.error);
-              error.object = object;
-
-              errors.push(error);
-            }
-          });
-        });
-      }
-
-      return promise;
-    };
-
-    var promise = Parse.Promise.as();
-    var batch = [];
-    Parse._arrayEach(list, function(object, i) {
-      if (!object.id || !options.wait) {
-        triggerDestroy(object);
-      }
-
-      if (object.id) {
-        batch.push(object);
-      }
-
-      if (batch.length === 20 || i+1 === list.length) {
-        var thisBatch = batch;
-        batch = [];
-
-        promise = promise.then(function() {
-          return destroyBatch(thisBatch);
-        });
-      }
-    });
-
-    return promise.then(function() {
-      if (errors.length === 0) {
-        return true;
-      } else {
-        var error = new Parse.Error(Parse.Error.AGGREGATE_ERROR,
-                                    "Error deleting an object in destroyAll");
-        error.errors = errors;
-
-        return Parse.Promise.error(error);
-      }
-    })._thenRunCallbacks(options);
-  };
-
-  /**
-   * Fetches the given list of Parse.Object.
-   * If any error is encountered, stops and calls the error handler.
-   *
-   * <pre>
-   *   Parse.Object.fetchAll([object1, object2, ...], {
-   *     success: function(list) {
-   *       // All the objects were fetched.
-   *     },
-   *     error: function(error) {
-   *       // An error occurred while fetching one of the objects.
-   *     },
-   *   });
-   * </pre>
-   *
-   * @param {Array} list A list of <code>Parse.Object</code>.
-   * @param {Object} options A Backbone-style callback object.
-   * Valid options are:<ul>
-   *   <li>success: A Backbone-style success callback.
-   *   <li>error: An Backbone-style error callback.   
-   * </ul>
-   */
-  Parse.Object.fetchAll = function(list, options) {
-    return Parse.Object._fetchAll(
-      list, 
-      true
-    )._thenRunCallbacks(options);    
-  };  
-
-  /**
-   * Fetches the given list of Parse.Object if needed.
-   * If any error is encountered, stops and calls the error handler.
-   *
-   * <pre>
-   *   Parse.Object.fetchAllIfNeeded([object1, ...], {
-   *     success: function(list) {
-   *       // Objects were fetched and updated.
-   *     },
-   *     error: function(error) {
-   *       // An error occurred while fetching one of the objects.
-   *     },
-   *   });
-   * </pre>
-   *
-   * @param {Array} list A list of <code>Parse.Object</code>.
-   * @param {Object} options A Backbone-style callback object.
-   * Valid options are:<ul>
-   *   <li>success: A Backbone-style success callback.
-   *   <li>error: An Backbone-style error callback.   
-   * </ul>
-   */
-  Parse.Object.fetchAllIfNeeded = function(list, options) {    
-    return Parse.Object._fetchAll(
-      list, 
-      false
-    )._thenRunCallbacks(options);
-  };    
-
-  // Attach all inheritable methods to the Parse.Object prototype.
-  _.extend(Parse.Object.prototype, Parse.Events,
-           /** @lends Parse.Object.prototype */ {
+  // Attach all inheritable methods to the AV.Object prototype.
+  _.extend(AV.Object.prototype, AV.Events,
+           /** @lends AV.Object.prototype */ {
     _existed: false,
 
     /**
@@ -4610,22 +4345,22 @@
     initialize: function(){},
 
     /**
-     * Returns a JSON version of the object suitable for saving to Parse.
+     * Returns a JSON version of the object suitable for saving to AV.
      * @return {Object}
      */
     toJSON: function() {
       var json = this._toFullJSON();
-      Parse._arrayEach(["__type", "className"],
+      AV._arrayEach(["__type", "className"],
                        function(key) { delete json[key]; });
       return json;
     },
 
     _toFullJSON: function(seenObjects) {
       var json = _.clone(this.attributes);
-      Parse._objectEach(json, function(val, key) {
-        json[key] = Parse._encode(val, seenObjects);
+      AV._objectEach(json, function(val, key) {
+        json[key] = AV._encode(val, seenObjects);
       });
-      Parse._objectEach(this._operations, function(val, key) {
+      AV._objectEach(this._operations, function(val, key) {
         json[key] = val;
       });
 
@@ -4662,12 +4397,12 @@
         return;
       }
       self._refreshingCache = true;
-      Parse._objectEach(this.attributes, function(value, key) {
-        if (value instanceof Parse.Object) {
+      AV._objectEach(this.attributes, function(value, key) {
+        if (value instanceof AV.Object) {
           value._refreshCache();
         } else if (_.isObject(value)) {
           if (self._resetCacheForKey(key)) {
-            self.set(key, new Parse.Op.Set(value), { silent: true });
+            self.set(key, new AV.Op.Set(value), { silent: true });
           }
         }
       });
@@ -4699,20 +4434,12 @@
     },
 
     /**
-     * Returns an array of keys that have been modified since last save/refresh
-     * @return {Array of string}
-     */
-    dirtyKeys: function() {
-      return _.keys(_.last(this._opSetQueue));
-    },
-
-    /**
      * Gets a Pointer referencing this Object.
      */
     _toPointer: function() {
-      if (!this.id) {
-        throw new Error("Can't serialize an unsaved Parse.Object");
-      }
+      // if (!this.id) {
+      //   throw new Error("Can't serialize an unsaved AV.Object");
+      // }
       return { __type: "Pointer",
                className: this.className,
                objectId: this.id };
@@ -4733,13 +4460,13 @@
     relation: function(attr) {
       var value = this.get(attr);
       if (value) {
-        if (!(value instanceof Parse.Relation)) {
+        if (!(value instanceof AV.Relation)) {
           throw "Called relation() on non-relation field " + attr;
         }
         value._ensureParentAndKey(this, attr);
         return value;
       } else {
-        return new Parse.Relation(this, attr);
+        return new AV.Relation(this, attr);
       }
     },
 
@@ -4753,7 +4480,7 @@
       }
       var val = this.attributes[attr];
       var escaped;
-      if (Parse._isNullOrUndefined(val)) {
+      if (AV._isNullOrUndefined(val)) {
         escaped = '';
       } else {
         escaped = _.escape(val.toString());
@@ -4769,73 +4496,31 @@
      * @return {Boolean}
      */
     has: function(attr) {
-      return !Parse._isNullOrUndefined(this.attributes[attr]);
+      return !AV._isNullOrUndefined(this.attributes[attr]);
     },
 
     /**
      * Pulls "special" fields like objectId, createdAt, etc. out of attrs
      * and puts them on "this" directly.  Removes them from attrs.
-     * @param attrs - A dictionary with the data for this Parse.Object.
+     * @param attrs - A dictionary with the data for this AV.Object.
      */
     _mergeMagicFields: function(attrs) {
       // Check for changes of magic fields.
       var model = this;
       var specialFields = ["id", "objectId", "createdAt", "updatedAt"];
-      Parse._arrayEach(specialFields, function(attr) {
+      AV._arrayEach(specialFields, function(attr) {
         if (attrs[attr]) {
           if (attr === "objectId") {
             model.id = attrs[attr];
           } else if ((attr === "createdAt" || attr === "updatedAt") &&
                      !_.isDate(attrs[attr])) {
-            model[attr] = Parse._parseDate(attrs[attr]);
+            model[attr] = AV._parseDate(attrs[attr]);
           } else {
             model[attr] = attrs[attr];
           }
           delete attrs[attr];
         }
       });
-    },
-
-    /**
-     * Copies the given serverData to "this", refreshes attributes, and
-     * clears pending changes;
-     */
-    _copyServerData: function(serverData) {
-      // Copy server data
-      var tempServerData = {};
-      Parse._objectEach(serverData, function(value, key) {
-        tempServerData[key] = Parse._decode(key, value);
-      });
-      this._serverData = tempServerData;
-
-      // Refresh the attributes.
-      this._rebuildAllEstimatedData();
-
-      
-      // Clear out any changes the user might have made previously.
-      this._refreshCache();
-      this._opSetQueue = [{}];
-
-      // Refresh the attributes again.
-      this._rebuildAllEstimatedData();       
-    },
-
-    /**
-     * Merges another object's attributes into this object.
-     */
-    _mergeFromObject: function(other) {
-      if (!other) {
-        return;
-      }
-      
-      // This does the inverse of _mergeMagicFields.
-      this.id = other.id;
-      this.createdAt = other.createdAt;
-      this.updatedAt = other.updatedAt;
-
-      this._copyServerData(other._serverData);
-
-      this._hasData = true;
     },
 
     /**
@@ -4862,7 +4547,7 @@
       var failedChanges = _.first(this._opSetQueue);
       this._opSetQueue = _.rest(this._opSetQueue);
       var nextChanges = _.first(this._opSetQueue);
-      Parse._objectEach(failedChanges, function(op, key) {
+      AV._objectEach(failedChanges, function(op, key) {
         var op1 = failedChanges[key];
         var op2 = nextChanges[key];
         if (op1 && op2) {
@@ -4885,8 +4570,8 @@
       // Note that doing it like this means we will unify separate copies of the
       // same object, but that's a risk we have to take.
       var fetchedObjects = {};
-      Parse._traverse(this.attributes, function(object) {
-        if (object instanceof Parse.Object && object.id && object._hasData) {
+      AV._traverse(this.attributes, function(object) {
+        if (object instanceof AV.Object && object.id && object._hasData) {
           fetchedObjects[object.id] = object;
         }
       });
@@ -4896,13 +4581,13 @@
       this._applyOpSet(savedChanges, this._serverData);
       this._mergeMagicFields(serverData);
       var self = this;
-      Parse._objectEach(serverData, function(value, key) {
-        self._serverData[key] = Parse._decode(key, value);
+      AV._objectEach(serverData, function(value, key) {
+        self._serverData[key] = AV._decode(key, value);
 
         // Look for any objects that might have become unfetched and fix them
         // by replacing their values with the previously observed values.
-        var fetched = Parse._traverse(self._serverData[key], function(object) {
-          if (object instanceof Parse.Object && fetchedObjects[object.id]) {
+        var fetched = AV._traverse(self._serverData[key], function(object) {
+          if (object instanceof AV.Object && fetchedObjects[object.id]) {
             return fetchedObjects[object.id];
           }
         });
@@ -4919,24 +4604,34 @@
      * the given object.
      */
     _finishFetch: function(serverData, hasData) {
-      
+      // Clear out any changes the user might have made previously.
       this._opSetQueue = [{}];
 
       // Bring in all the new server data.
       this._mergeMagicFields(serverData);
-      this._copyServerData(serverData);
+      var self = this;
+      AV._objectEach(serverData, function(value, key) {
+        self._serverData[key] = AV._decode(key, value);
+      });
+
+      // Refresh the attributes.
+      this._rebuildAllEstimatedData();
+
+      // Clear out the cache of mutable containers.
+      this._refreshCache();
+      this._opSetQueue = [{}];
 
       this._hasData = hasData;
     },
 
     /**
-     * Applies the set of Parse.Op in opSet to the object target.
+     * Applies the set of AV.Op in opSet to the object target.
      */
     _applyOpSet: function(opSet, target) {
       var self = this;
-      Parse._objectEach(opSet, function(change, key) {
+      AV._objectEach(opSet, function(change, key) {
         target[key] = change._estimate(target[key], self, key);
-        if (target[key] === Parse.Op._UNSET) {
+        if (target[key] === AV.Op._UNSET) {
           delete target[key];
         }
       });
@@ -4949,8 +4644,8 @@
     _resetCacheForKey: function(key) {
       var value = this.attributes[key];
       if (_.isObject(value) &&
-          !(value instanceof Parse.Object) &&
-          !(value instanceof Parse.File)) {
+          !(value instanceof AV.Object) &&
+          !(value instanceof AV.File)) {
         value = value.toJSON ? value.toJSON() : value;
         var json = JSON.stringify(value);
         if (this._hashedJSON[key] !== json) {
@@ -4972,11 +4667,11 @@
       if (this._serverData[key]) {
         this.attributes[key] = this._serverData[key];
       }
-      Parse._arrayEach(this._opSetQueue, function(opSet) {
+      AV._arrayEach(this._opSetQueue, function(opSet) {
         var op = opSet[key];
         if (op) {
           self.attributes[key] = op._estimate(self.attributes[key], self, key);
-          if (self.attributes[key] === Parse.Op._UNSET) {
+          if (self.attributes[key] === AV.Op._UNSET) {
             delete self.attributes[key];
           } else {
             self._resetCacheForKey(key);
@@ -4996,20 +4691,20 @@
       var previousAttributes = _.clone(this.attributes);
 
       this.attributes = _.clone(this._serverData);
-      Parse._arrayEach(this._opSetQueue, function(opSet) {
+      AV._arrayEach(this._opSetQueue, function(opSet) {
         self._applyOpSet(opSet, self.attributes);
-        Parse._objectEach(opSet, function(op, key) {
+        AV._objectEach(opSet, function(op, key) {
           self._resetCacheForKey(key);
         });
       });
 
       // Trigger change events for anything that changed because of the fetch.
-      Parse._objectEach(previousAttributes, function(oldValue, key) {
+      AV._objectEach(previousAttributes, function(oldValue, key) {
         if (self.attributes[key] !== oldValue) {
           self.trigger('change:' + key, self, self.attributes[key], {});
         }
       });
-      Parse._objectEach(this.attributes, function(newValue, key) {
+      AV._objectEach(this.attributes, function(newValue, key) {
         if (!_.has(previousAttributes, key)) {
           self.trigger('change:' + key, self, newValue, {});
         }
@@ -5038,27 +4733,27 @@
      *   });
      *
      *   game.set("finished", true);</pre></p>
-     * 
+     *
      * @param {String} key The key to set.
      * @param {} value The value to give it.
      * @param {Object} options A set of Backbone-like options for the set.
      *     The only supported options are <code>silent</code>,
      *     <code>error</code>, and <code>promise</code>.
      * @return {Boolean} true if the set succeeded.
-     * @see Parse.Object#validate
-     * @see Parse.Error
+     * @see AV.Object#validate
+     * @see AV.Error
      */
     set: function(key, value, options) {
       var attrs, attr;
-      if (_.isObject(key) || Parse._isNullOrUndefined(key)) {
+      if (_.isObject(key) || AV._isNullOrUndefined(key)) {
         attrs = key;
-        Parse._objectEach(attrs, function(v, k) {
-          attrs[k] = Parse._decode(k, v);
+        AV._objectEach(attrs, function(v, k) {
+          attrs[k] = AV._decode(k, v);
         });
         options = value;
       } else {
         attrs = {};
-        attrs[key] = Parse._decode(key, value);
+        attrs[key] = AV._decode(key, value);
       }
 
       // Extract attributes and options.
@@ -5066,25 +4761,25 @@
       if (!attrs) {
         return this;
       }
-      if (attrs instanceof Parse.Object) {
+      if (attrs instanceof AV.Object) {
         attrs = attrs.attributes;
       }
 
       // If the unset option is used, every attribute should be a Unset.
       if (options.unset) {
-        Parse._objectEach(attrs, function(unused_value, key) {
-          attrs[key] = new Parse.Op.Unset();
+        AV._objectEach(attrs, function(unused_value, key) {
+          attrs[key] = new AV.Op.Unset();
         });
       }
 
       // Apply all the attributes to get the estimated values.
       var dataToValidate = _.clone(attrs);
       var self = this;
-      Parse._objectEach(dataToValidate, function(value, key) {
-        if (value instanceof Parse.Op) {
+      AV._objectEach(dataToValidate, function(value, key) {
+        if (value instanceof AV.Op) {
           dataToValidate[key] = value._estimate(self.attributes[key],
                                                 self, key);
-          if (dataToValidate[key] === Parse.Op._UNSET) {
+          if (dataToValidate[key] === AV.Op._UNSET) {
             delete dataToValidate[key];
           }
         }
@@ -5102,23 +4797,23 @@
       var prev = this._previousAttributes || {};
 
       // Update attributes.
-      Parse._arrayEach(_.keys(attrs), function(attr) {
+      AV._arrayEach(_.keys(attrs), function(attr) {
         var val = attrs[attr];
 
         // If this is a relation object we need to set the parent correctly,
         // since the location where it was parsed does not have access to
         // this object.
-        if (val instanceof Parse.Relation) {
+        if (val instanceof AV.Relation) {
           val.parent = self;
         }
 
-        if (!(val instanceof Parse.Op)) {
-          val = new Parse.Op.Set(val);
+        if (!(val instanceof AV.Op)) {
+          val = new AV.Op.Set(val);
         }
 
         // See if this change will actually have any effect.
         var isRealChange = true;
-        if (val instanceof Parse.Op.Set &&
+        if (val instanceof AV.Op.Set &&
             _.isEqual(self.attributes[attr], val.value)) {
           isRealChange = false;
         }
@@ -5175,7 +4870,7 @@
       if (_.isUndefined(amount) || _.isNull(amount)) {
         amount = 1;
       }
-      return this.set(attr, new Parse.Op.Increment(amount));
+      return this.set(attr, new AV.Op.Increment(amount));
     },
 
     /**
@@ -5185,7 +4880,7 @@
      * @param item {} The item to add.
      */
     add: function(attr, item) {
-      return this.set(attr, new Parse.Op.Add([item]));
+      return this.set(attr, new AV.Op.Add([item]));
     },
 
     /**
@@ -5197,7 +4892,7 @@
      * @param item {} The object to add.
      */
     addUnique: function(attr, item) {
-      return this.set(attr, new Parse.Op.AddUnique([item]));
+      return this.set(attr, new AV.Op.AddUnique([item]));
     },
 
     /**
@@ -5208,17 +4903,17 @@
      * @param item {} The object to remove.
      */
     remove: function(attr, item) {
-      return this.set(attr, new Parse.Op.Remove([item]));
+      return this.set(attr, new AV.Op.Remove([item]));
     },
 
     /**
-     * Returns an instance of a subclass of Parse.Op describing what kind of
+     * Returns an instance of a subclass of AV.Op describing what kind of
      * modification has been performed on this field since the last time it was
      * saved. For example, after calling object.increment("x"), calling
-     * object.op("x") would return an instance of Parse.Op.Increment.
+     * object.op("x") would return an instance of AV.Op.Increment.
      *
      * @param attr {String} The key.
-     * @returns {Parse.Op} The operation, or undefined if none.
+     * @returns {AV.Op} The operation, or undefined if none.
      */
     op: function(attr) {
       return _.last(this._opSetQueue)[attr];
@@ -5241,7 +4936,7 @@
      */
     _getSaveJSON: function() {
       var json = _.clone(_.first(this._opSetQueue));
-      Parse._objectEach(json, function(op, key) {
+      AV._objectEach(json, function(op, key) {
         json[key] = op.toJSON();
       });
       return json;
@@ -5251,34 +4946,19 @@
      * Returns true if this object can be serialized for saving.
      */
     _canBeSerialized: function() {
-      return Parse.Object._canBeSerializedAsValue(this.attributes);
+      return AV.Object._canBeSerializedAsValue(this.attributes);
     },
 
     /**
      * Fetch the model from the server. If the server's representation of the
      * model differs from its current attributes, they will be overriden,
      * triggering a <code>"change"</code> event.
-     *
-     * @param {Object} options A Backbone-style callback object.
-     * Valid options are:<ul>
-     *   <li>success: A Backbone-style success callback.
-     *   <li>error: An Backbone-style error callback.
-     *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-     *     be used for this request.
-     * </ul>
-     * @return {Parse.Promise} A promise that is fulfilled when the fetch
+     * @return {AV.Promise} A promise that is fulfilled when the fetch
      *     completes.
      */
     fetch: function(options) {
       var self = this;
-      options = options || {};
-      var request = Parse._request({
-        method: 'GET',
-        route: "classes",
-        className: this.className,
-        objectId: this.id,
-        useMasterKey: options.useMasterKey
-      });
+      var request = AV._request("classes", this.className, this.id, 'GET');
       return request.then(function(response, status, xhr) {
         self._finishFetch(self.parse(response, status, xhr), true);
         return self;
@@ -5306,7 +4986,7 @@
      *       // The save was successful.
      *     },
      *     error: function(gameTurnAgain, error) {
-     *       // The save failed.  Error is an instance of Parse.Error.
+     *       // The save failed.  Error is an instance of AV.Error.
      *     }
      *   });</pre>
      * or with promises:<pre>
@@ -5316,26 +4996,16 @@
      *   }).then(function(gameTurnAgain) {
      *     // The save was successful.
      *   }, function(error) {
-     *     // The save failed.  Error is an instance of Parse.Error.
+     *     // The save failed.  Error is an instance of AV.Error.
      *   });</pre>
-     * 
-     * @param {Object} options A Backbone-style callback object.
-     * Valid options are:<ul>
-     *   <li>wait: Set to true to wait for the server to confirm a successful
-     *   save before modifying the attributes on the object.
-     *   <li>silent: Set to true to avoid firing the `set` event.
-     *   <li>success: A Backbone-style success callback.
-     *   <li>error: An Backbone-style error callback.
-     *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-     *     be used for this request.
-     * </ul>
-     * @return {Parse.Promise} A promise that is fulfilled when the save
+     *
+     * @return {AV.Promise} A promise that is fulfilled when the save
      *     completes.
-     * @see Parse.Error
+     * @see AV.Error
      */
     save: function(arg1, arg2, arg3) {
       var i, attrs, current, options, saved;
-      if (_.isObject(arg1) || Parse._isNullOrUndefined(arg1)) {
+      if (_.isObject(arg1) || AV._isNullOrUndefined(arg1)) {
         attrs = arg1;
         options = arg2;
       } else {
@@ -5379,7 +5049,7 @@
         setError = error;
       };
       if (attrs && !this.set(attrs, setOptions)) {
-        return Parse.Promise.error(setError)._thenRunCallbacks(options, this);
+        return AV.Promise.error(setError)._thenRunCallbacks(options, this);
       }
 
       var model = this;
@@ -5387,27 +5057,25 @@
       // If there is any unsaved child, save it first.
       model._refreshCache();
 
-      
+
 
       var unsavedChildren = [];
       var unsavedFiles = [];
-      Parse.Object._findUnsavedChildren(model.attributes,
+      AV.Object._findUnsavedChildren(model.attributes,
                                         unsavedChildren,
                                         unsavedFiles);
       if (unsavedChildren.length + unsavedFiles.length > 0) {
-        return Parse.Object._deepSaveAsync(this.attributes, {
-          useMasterKey: options.useMasterKey
-        }).then(function() {
+        return AV.Object._deepSaveAsync(this.attributes).then(function() {
           return model.save(null, options);
         }, function(error) {
-          return Parse.Promise.error(error)._thenRunCallbacks(options, model);
+          return AV.Promise.error(error)._thenRunCallbacks(options, model);
         });
       }
 
       this._startSave();
       this._saving = (this._saving || 0) + 1;
 
-      this._allPreviousSaves = this._allPreviousSaves || Parse.Promise.as();
+      this._allPreviousSaves = this._allPreviousSaves || AV.Promise.as();
       this._allPreviousSaves = this._allPreviousSaves._continueWith(function() {
         var method = model.id ? 'PUT' : 'POST';
 
@@ -5420,14 +5088,7 @@
           route = "users";
           className = null;
         }
-        var request = Parse._request({
-          route: route,
-          className: className,
-          objectId: model.id,
-          method: method,
-          useMasterKey: options.useMasterKey,
-          data: json
-        });
+        var request = AV._request(route, className, model.id, method, json);
 
         request = request.then(function(resp, status, xhr) {
           var serverAttrs = model.parse(resp, status, xhr);
@@ -5442,7 +5103,7 @@
 
         }, function(error) {
           model._cancelSave();
-          return Parse.Promise.error(error);
+          return AV.Promise.error(error);
 
         })._thenRunCallbacks(options, model);
 
@@ -5457,16 +5118,7 @@
      * If `wait: true` is passed, waits for the server to respond
      * before removal.
      *
-     * @param {Object} options A Backbone-style callback object.
-     * Valid options are:<ul>
-     *   <li>wait: Set to true to wait for the server to confirm successful
-     *   deletion of the object before triggering the `destroy` event.
-     *   <li>success: A Backbone-style success callback
-     *   <li>error: An Backbone-style error callback.
-     *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-     *     be used for this request.
-     * </ul>
-     * @return {Parse.Promise} A promise that is fulfilled when the destroy
+     * @return {AV.Promise} A promise that is fulfilled when the destroy
      *     completes.
      */
     destroy: function(options) {
@@ -5485,13 +5137,8 @@
         triggerDestroy();
       }
 
-      var request = Parse._request({
-        route: "classes",
-        className: this.className,
-        objectId: this.id,
-        method: 'DELETE',
-        useMasterKey: options.useMasterKey
-      });
+      var request =
+          AV._request("classes", this.className, this.id, 'DELETE');
       return request.then(function() {
         if (options.wait) {
           triggerDestroy();
@@ -5508,7 +5155,7 @@
       var output = _.clone(resp);
       _(["createdAt", "updatedAt"]).each(function(key) {
         if (output[key]) {
-          output[key] = Parse._parseDate(output[key]);
+          output[key] = AV._parseDate(output[key]);
         }
       });
       if (!output.updatedAt) {
@@ -5522,14 +5169,14 @@
 
     /**
      * Creates a new model with identical attributes to this one.
-     * @return {Parse.Object}
+     * @return {AV.Object}
      */
     clone: function() {
       return new this.constructor(this.attributes);
     },
 
     /**
-     * Returns true if this object has never been saved to Parse.
+     * Returns true if this object has never been saved to AV.
      * @return {Boolean}
      */
     isNew: function() {
@@ -5548,14 +5195,14 @@
 
       // Silent changes become pending changes.
       var self = this;
-      Parse._objectEach(this._silent, function(attr) {
+      AV._objectEach(this._silent, function(attr) {
         self._pending[attr] = true;
       });
 
       // Silent changes are triggered.
       var changes = _.extend({}, options.changes, this._silent);
       this._silent = {};
-      Parse._objectEach(changes, function(unused_value, attr) {
+      AV._objectEach(changes, function(unused_value, attr) {
         self.trigger('change:' + attr, self, self.get(attr), options);
       });
       if (changing) {
@@ -5574,7 +5221,7 @@
         this._pending = {};
         this.trigger('change', this, options);
         // Pending and silent changes still remain.
-        Parse._objectEach(this.changed, deleteChanged);
+        AV._objectEach(this.changed, deleteChanged);
         self._previousAttributes = _.clone(this.attributes);
       }
 
@@ -5583,7 +5230,7 @@
     },
 
     /**
-     * Returns true if this object was created by the Parse server when the
+     * Returns true if this object was created by the AV server when the
      * object might have already been there (e.g. in the case of a Facebook
      * login)
      */
@@ -5619,7 +5266,7 @@
       }
       var changed = {};
       var old = this._previousAttributes;
-      Parse._objectEach(diff, function(diffVal, attr) {
+      AV._objectEach(diff, function(diffVal, attr) {
         if (!_.isEqual(old[attr], diffVal)) {
           changed[attr] = diffVal;
         }
@@ -5659,28 +5306,19 @@
 
     /**
      * You should not call this function directly unless you subclass
-     * <code>Parse.Object</code>, in which case you can override this method
+     * <code>AV.Object</code>, in which case you can override this method
      * to provide additional validation on <code>set</code> and
-     * <code>save</code>.  Your implementation should return 
+     * <code>save</code>.  Your implementation should return
      *
      * @param {Object} attrs The current data to validate.
      * @param {Object} options A Backbone-like options object.
      * @return {} False if the data is valid.  An error object otherwise.
-     * @see Parse.Object#set
+     * @see AV.Object#set
      */
     validate: function(attrs, options) {
-      if (_.has(attrs, "ACL") && !(attrs.ACL instanceof Parse.ACL)) {
-        return new Parse.Error(Parse.Error.OTHER_CAUSE,
-                               "ACL must be a Parse.ACL.");
-      }
-      var correct = true;
-      Parse._objectEach(attrs, function(unused_value, key) {
-        if (!(/^[A-Za-z][0-9A-Za-z_]*$/).test(key)) {
-          correct = false;
-        }
-      });
-      if (!correct) {
-        return new Parse.Error(Parse.Error.INVALID_KEY_NAME); 
+      if (_.has(attrs, "ACL") && !(attrs.ACL instanceof AV.ACL)) {
+        return new AV.Error(AV.Error.OTHER_CAUSE,
+                               "ACL must be a AV.ACL.");
       }
       return false;
     },
@@ -5709,8 +5347,8 @@
 
     /**
      * Returns the ACL for this object.
-     * @returns {Parse.ACL} An instance of Parse.ACL.
-     * @see Parse.Object#get
+     * @returns {AV.ACL} An instance of AV.ACL.
+     * @see AV.Object#get
      */
     getACL: function() {
       return this.get("ACL");
@@ -5718,11 +5356,11 @@
 
     /**
      * Sets the ACL to be used for this object.
-     * @param {Parse.ACL} acl An instance of Parse.ACL.
+     * @param {AV.ACL} acl An instance of AV.ACL.
      * @param {Object} options Optional Backbone-like options object to be
      *     passed in to set.
      * @return {Boolean} Whether the set passed validation.
-     * @see Parse.Object#set
+     * @see AV.Object#set
      */
     setACL: function(acl, options) {
       return this.set("ACL", acl, options);
@@ -5730,198 +5368,153 @@
 
   });
 
+   /**
+    * Creates an instance of a subclass of AV.Object for the give classname
+    * and id.
+    * @param  {String} className The name of the AV class backing this model.
+    * @param {String} id The object id of this model.
+    * @return {AV.Object} A new subclass instance of AV.Object.
+    */
+   AV.Object.createWithoutData = function(className, id, hasData){
+     var result = new AV.Object(className);
+     result.id = id
+     result._hasData = hasData;
+     return result;
+   };
+   /**
+    * Delete objects in batch.The objects className must be the same.
+    * @param {Array} The ParseObject array to be deleted.
+    * @param {Object} options Standard options object with success and error
+    *     callbacks.
+    * @return {AV.Promise} A promise that is fulfilled when the save
+    *     completes.
+    */
+   AV.Object.destroyAll = function(objects, options){
+      if(objects == null || objects.length == 0){
+		  return AV.Promise.as()._thenRunCallbacks(options);
+      }
+      var className = objects[0].className;
+      var id = "";
+      var wasFirst = true;
+      objects.forEach(function(obj){
+        if(obj.className != className)
+			  throw "AV.Object.destroyAll requires the argument object array's classNames must be the same";
+          if(!obj.id)
+              throw "Could not delete unsaved object";
+          if(wasFirst){
+              id = obj.id;
+              wasFirst = false;
+          }else{
+              id = id + ',' + obj.id;
+          }
+      });
+      var request =
+          AV._request("classes", className, id, 'DELETE');
+      return request._thenRunCallbacks(options);
+   };
+
   /**
    * Returns the appropriate subclass for making new instances of the given
    * className string.
    */
-  Parse.Object._getSubclass = function(className) {
+  AV.Object._getSubclass = function(className) {
     if (!_.isString(className)) {
-      throw "Parse.Object._getSubclass requires a string argument.";
+      throw "AV.Object._getSubclass requires a string argument.";
     }
-    var ObjectClass = Parse.Object._classMap[className];
+    var ObjectClass = AV.Object._classMap[className];
     if (!ObjectClass) {
-      ObjectClass = Parse.Object.extend(className);
-      Parse.Object._classMap[className] = ObjectClass;
+      ObjectClass = AV.Object.extend(className);
+      AV.Object._classMap[className] = ObjectClass;
     }
     return ObjectClass;
   };
 
   /**
-   * Creates an instance of a subclass of Parse.Object for the given classname.
+   * Creates an instance of a subclass of AV.Object for the given classname.
    */
-  Parse.Object._create = function(className, attributes, options) {
-    var ObjectClass = Parse.Object._getSubclass(className);
+  AV.Object._create = function(className, attributes, options) {
+    var ObjectClass = AV.Object._getSubclass(className);
     return new ObjectClass(attributes, options);
   };
-  
-  /**
-   * Returns a list of object ids given a list of objects.
-   */
-  Parse.Object._toObjectIdArray = function(list, omitObjectsWithData) {
-    if (list.length === 0) {
-      return Parse.Promise.as(list);
-    }
-
-    var error;
-    var className = list[0].className;
-    var objectIds = [];   
-    for (var i = 0; i < list.length; i++) {
-      var object = list[i];
-      if (className !== object.className) {
-        error = new Parse.Error(Parse.Error.INVALID_CLASS_NAME, 
-                                "All objects should be of the same class");
-        return Parse.Promise.error(error);
-      } else if (!object.id) {
-        error = new Parse.Error(Parse.Error.MISSING_OBJECT_ID,
-                                "All objects must have an ID");
-        return Parse.Promise.error(error);
-      } else if (omitObjectsWithData && object._hasData) {
-        continue;
-      }
-      objectIds.push(object.id);
-    }
-
-    return Parse.Promise.as(objectIds);
-  };
-
-  /**
-   * Updates a list of objects with fetched results.
-   */
-  Parse.Object._updateWithFetchedResults = function(list, fetched, forceFetch) {
-    var fetchedObjectsById = {};
-    Parse._arrayEach(fetched, function(object, i) {
-      fetchedObjectsById[object.id] = object;
-    });
-
-    for (var i = 0; i < list.length; i++) {
-      var object = list[i];  
-      var fetchedObject = fetchedObjectsById[object.id];
-      if (!fetchedObject && forceFetch) {
-        var error = new Parse.Error(Parse.Error.OBJECT_NOT_FOUND,
-                                "All objects must exist on the server");
-        return Parse.Promise.error(error);        
-      }   
-
-      object._mergeFromObject(fetchedObject);
-    }
-
-    return Parse.Promise.as(list);
-  };  
-  
-  /**
-   * Fetches the objects given in list.  The forceFetch option will fetch all
-   * objects if true and ignore objects with data if false.
-   */
-  Parse.Object._fetchAll = function(list, forceFetch) {    
-    if (list.length === 0) {
-      return Parse.Promise.as(list);
-    } 
-    
-    var omitObjectsWithData = !forceFetch;
-    return Parse.Object._toObjectIdArray(
-      list, 
-      omitObjectsWithData
-    ).then(function(objectIds) {
-      var className = list[0].className;
-      var query = new Parse.Query(className);
-      query.containedIn("objectId", objectIds);
-      query.limit = objectIds.length;
-      return query.find();
-    }).then(function(results) {
-      return Parse.Object._updateWithFetchedResults(
-        list, 
-        results, 
-        forceFetch
-      );
-    });   
-  };  
 
   // Set up a map of className to class so that we can create new instances of
-  // Parse Objects from JSON automatically.
-  Parse.Object._classMap = {};
+  // AV Objects from JSON automatically.
+  AV.Object._classMap = {};
 
-  Parse.Object._extend = Parse._extend;
+  AV.Object._extend = AV._extend;
 
   /**
-   * Creates a new subclass of Parse.Object for the given Parse class name.
+   * Creates a new subclass of AV.Object for the given AV class name.
    *
-   * <p>Every extension of a Parse class will inherit from the most recent
-   * previous extension of that class. When a Parse.Object is automatically
+   * <p>Every extension of a AV class will inherit from the most recent
+   * previous extension of that class. When a AV.Object is automatically
    * created by parsing JSON, it will use the most recent extension of that
    * class.</p>
    *
    * <p>You should call either:<pre>
-   *     var MyClass = Parse.Object.extend("MyClass", {
-   *         <i>Instance methods</i>,
-   *         initialize: function(attrs, options) {
-   *             this.someInstanceProperty = [],
-   *             <i>Other instance properties</i>
-   *         }
+   *     var MyClass = AV.Object.extend("MyClass", {
+   *         <i>Instance properties</i>
    *     }, {
    *         <i>Class properties</i>
    *     });</pre>
    * or, for Backbone compatibility:<pre>
-   *     var MyClass = Parse.Object.extend({
+   *     var MyClass = AV.Object.extend({
    *         className: "MyClass",
-   *         <i>Instance methods</i>,
-   *         initialize: function(attrs, options) {
-   *             this.someInstanceProperty = [],
-   *             <i>Other instance properties</i>
-   *         }
+   *         <i>Other instance properties</i>
    *     }, {
    *         <i>Class properties</i>
    *     });</pre></p>
    *
-   * @param {String} className The name of the Parse class backing this model.
+   * @param {String} className The name of the AV class backing this model.
    * @param {Object} protoProps Instance properties to add to instances of the
    *     class returned from this method.
    * @param {Object} classProps Class properties to add the class returned from
    *     this method.
-   * @return {Class} A new subclass of Parse.Object.
+   * @return {Class} A new subclass of AV.Object.
    */
-  Parse.Object.extend = function(className, protoProps, classProps) {
+  AV.Object.extend = function(className, protoProps, classProps) {
     // Handle the case with only two args.
     if (!_.isString(className)) {
       if (className && _.has(className, "className")) {
-        return Parse.Object.extend(className.className, className, protoProps);
+        return AV.Object.extend(className.className, className, protoProps);
       } else {
         throw new Error(
-            "Parse.Object.extend's first argument should be the className.");
+            "AV.Object.extend's first argument should be the className.");
       }
     }
 
     // If someone tries to subclass "User", coerce it to the right type.
-    if (className === "User" && Parse.User._performUserRewrite) {
+    if (className === "User") {
       className = "_User";
     }
-    protoProps = protoProps || {};
-    protoProps.className = className;
 
     var NewClassObject = null;
-    if (_.has(Parse.Object._classMap, className)) {
-      var OldClassObject = Parse.Object._classMap[className];
+    if (_.has(AV.Object._classMap, className)) {
+      var OldClassObject = AV.Object._classMap[className];
       // This new subclass has been told to extend both from "this" and from
       // OldClassObject. This is multiple inheritance, which isn't supported.
       // For now, let's just pick one.
       NewClassObject = OldClassObject._extend(protoProps, classProps);
     } else {
+      protoProps = protoProps || {};
+      protoProps.className = className;
       NewClassObject = this._extend(protoProps, classProps);
     }
     // Extending a subclass should reuse the classname automatically.
     NewClassObject.extend = function(arg0) {
       if (_.isString(arg0) || (arg0 && _.has(arg0, "className"))) {
-        return Parse.Object.extend.apply(NewClassObject, arguments);
+        return AV.Object.extend.apply(NewClassObject, arguments);
       }
-      var newArguments = [className].concat(Parse._.toArray(arguments));
-      return Parse.Object.extend.apply(NewClassObject, newArguments);
+      var newArguments = [className].concat(AV._.toArray(arguments));
+      return AV.Object.extend.apply(NewClassObject, newArguments);
     };
-    Parse.Object._classMap[className] = NewClassObject;
+    AV.Object._classMap[className] = NewClassObject;
     return NewClassObject;
   };
 
-  Parse.Object._findUnsavedChildren = function(object, children, files) {
-    Parse._traverse(object, function(object) {
-      if (object instanceof Parse.Object) {
+  AV.Object._findUnsavedChildren = function(object, children, files) {
+    AV._traverse(object, function(object) {
+      if (object instanceof AV.Object) {
         object._refreshCache();
         if (object.dirty()) {
           children.push(object);
@@ -5929,7 +5522,7 @@
         return;
       }
 
-      if (object instanceof Parse.File) {
+      if (object instanceof AV.File) {
         if (!object.url()) {
           files.push(object);
         }
@@ -5938,47 +5531,39 @@
     });
   };
 
-  Parse.Object._canBeSerializedAsValue = function(object) {
-    
-    if (object instanceof Parse.Object) {
-      return !!object.id;
-    }
-    if (object instanceof Parse.File) {
-      // Don't recurse indefinitely into files.
-      return true;
-    }
-
+  AV.Object._canBeSerializedAsValue = function(object) {
     var canBeSerializedAsValue = true;
 
-    if (_.isArray(object)) {
-      Parse._arrayEach(object, function(child) {
-        if (!Parse.Object._canBeSerializedAsValue(child)) {
+    if (object instanceof AV.Object) {
+      canBeSerializedAsValue = !!object.id;
+
+    } else if (_.isArray(object)) {
+      AV._arrayEach(object, function(child) {
+        if (!AV.Object._canBeSerializedAsValue(child)) {
           canBeSerializedAsValue = false;
         }
       });
+
     } else if (_.isObject(object)) {
-      Parse._objectEach(object, function(child) {
-        if (!Parse.Object._canBeSerializedAsValue(child)) {
+      AV._objectEach(object, function(child) {
+        if (!AV.Object._canBeSerializedAsValue(child)) {
           canBeSerializedAsValue = false;
         }
       });
     }
+
     return canBeSerializedAsValue;
   };
 
-  /**
-   * @param {Object} object The root object.
-   * @param {Object} options: The only valid option is useMasterKey.
-   */
-  Parse.Object._deepSaveAsync = function(object, options) {
+  AV.Object._deepSaveAsync = function(object) {
     var unsavedChildren = [];
     var unsavedFiles = [];
-    Parse.Object._findUnsavedChildren(object, unsavedChildren, unsavedFiles);
+    AV.Object._findUnsavedChildren(object, unsavedChildren, unsavedFiles);
 
-    var promise = Parse.Promise.as();
+    var promise = AV.Promise.as();
     _.each(unsavedFiles, function(file) {
       promise = promise.then(function() {
-        return file.save(options);
+        return file.save();
       });
     });
 
@@ -5986,14 +5571,14 @@
     var remaining = _.uniq(objects);
 
     return promise.then(function() {
-      return Parse.Promise._continueWhile(function() {
+      return AV.Promise._continueWhile(function() {
         return remaining.length > 0;
       }, function() {
 
         // Gather up all the objects that can be saved in this batch.
         var batch = [];
         var newRemaining = [];
-        Parse._arrayEach(remaining, function(object) {
+        AV._arrayEach(remaining, function(object) {
           // Limit batches to 20 objects.
           if (batch.length > 20) {
             newRemaining.push(object);
@@ -6010,49 +5595,45 @@
 
         // If we can't save any objects, there must be a circular reference.
         if (batch.length === 0) {
-          return Parse.Promise.error(
-            new Parse.Error(Parse.Error.OTHER_CAUSE,
+          return AV.Promise.error(
+            new AV.Error(AV.Error.OTHER_CAUSE,
                             "Tried to save a batch with a cycle."));
         }
 
         // Reserve a spot in every object's save queue.
-        var readyToStart = Parse.Promise.when(_.map(batch, function(object) {
-          return object._allPreviousSaves || Parse.Promise.as();
+        var readyToStart = AV.Promise.when(_.map(batch, function(object) {
+          return object._allPreviousSaves || AV.Promise.as();
         }));
-        var batchFinished = new Parse.Promise();
-        Parse._arrayEach(batch, function(object) {
+        var batchFinished = new AV.Promise();
+        AV._arrayEach(batch, function(object) {
           object._allPreviousSaves = batchFinished;
         });
 
         // Save a single batch, whether previous saves succeeded or failed.
         return readyToStart._continueWith(function() {
-          return Parse._request({
-            route: "batch",
-            method: "POST",
-            useMasterKey: options.useMasterKey,
-            data: {
-              requests: _.map(batch, function(object) {
-                var json = object._getSaveJSON();
-                var method = "POST";
-  
-                var path = "/1/classes/" + object.className;
-                if (object.id) {
-                  path = path + "/" + object.id;
-                  method = "PUT";
-                }
-  
-                object._startSave();
-  
-                return {
-                  method: method,
-                  path: path,
-                  body: json
-                };
-              })
-            }
+          return AV._request("batch", null, null, "POST", {
+            requests: _.map(batch, function(object) {
+              var json = object._getSaveJSON();
+              var method = "POST";
+
+              var path = "/1/classes/" + object.className;
+              if (object.id) {
+                path = path + "/" + object.id;
+                method = "PUT";
+              }
+
+              object._startSave();
+
+              return {
+                method: method,
+                path: path,
+                body: json
+              };
+            })
+
           }).then(function(response, status, xhr) {
             var error;
-            Parse._arrayEach(batch, function(object, i) {
+            AV._arrayEach(batch, function(object, i) {
               if (response[i].success) {
                 object._finishSave(
                   object.parse(response[i].success, status, xhr));
@@ -6062,8 +5643,8 @@
               }
             });
             if (error) {
-              return Parse.Promise.error(
-                new Parse.Error(error.code, error.error));
+              return AV.Promise.error(
+                new AV.Error(error.code, error.error));
             }
 
           }).then(function(results) {
@@ -6071,7 +5652,7 @@
             return results;
           }, function(error) {
             batchFinished.reject(error);
-            return Parse.Promise.error(error);
+            return AV.Promise.error(error);
           });
         });
       });
@@ -6083,12 +5664,12 @@
 }(this));
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
-   * Represents a Role on the Parse server. Roles represent groupings of
+   * Represents a Role on the AV server. Roles represent groupings of
    * Users for the purposes of granting permissions (e.g. specifying an ACL
    * for an Object). Roles are specified by their sets of child users and
    * child roles, all of which are granted any permissions that the parent
@@ -6097,49 +5678,49 @@
    * <p>Roles must have a name (which cannot be changed after creation of the
    * role), and must specify an ACL.</p>
    * @class
-   * A Parse.Role is a local representation of a role persisted to the Parse
+   * A AV.Role is a local representation of a role persisted to the AV
    * cloud.
    */
-  Parse.Role = Parse.Object.extend("_Role", /** @lends Parse.Role.prototype */ {
+  AV.Role = AV.Object.extend("_Role", /** @lends AV.Role.prototype */ {
     // Instance Methods
-    
+
     /**
-     * Constructs a new ParseRole with the given name and ACL.
-     * 
+     * Constructs a new AVRole with the given name and ACL.
+     *
      * @param {String} name The name of the Role to create.
-     * @param {Parse.ACL} acl The ACL for this role. Roles must have an ACL.
+     * @param {AV.ACL} acl The ACL for this role. Roles must have an ACL.
      */
     constructor: function(name, acl) {
-      if (_.isString(name) && (acl instanceof Parse.ACL)) {
-        Parse.Object.prototype.constructor.call(this, null, null);
+      if (_.isString(name) && (acl instanceof AV.ACL)) {
+        AV.Object.prototype.constructor.call(this, null, null);
         this.setName(name);
         this.setACL(acl);
       } else {
-        Parse.Object.prototype.constructor.call(this, name, acl);
+        AV.Object.prototype.constructor.call(this, name, acl);
       }
     },
-    
+
     /**
      * Gets the name of the role.  You can alternatively call role.get("name")
-     * 
+     *
      * @return {String} the name of the role.
      */
     getName: function() {
       return this.get("name");
     },
-    
+
     /**
      * Sets the name for a role. This value must be set before the role has
      * been saved to the server, and cannot be set once the role has been
      * saved.
-     * 
+     *
      * <p>
      *   A role's name can only contain alphanumeric characters, _, -, and
      *   spaces.
      * </p>
      *
      * <p>This is equivalent to calling role.set("name", name)</p>
-     * 
+     *
      * @param {String} name The name of the role.
      * @param {Object} options Standard options object with success and error
      *     callbacks.
@@ -6147,37 +5728,37 @@
     setName: function(name, options) {
       return this.set("name", name, options);
     },
-    
+
     /**
-     * Gets the Parse.Relation for the Parse.Users that are direct
+     * Gets the AV.Relation for the AV.Users that are direct
      * children of this role. These users are granted any privileges that this
      * role has been granted (e.g. read or write access through ACLs). You can
      * add or remove users from the role through this relation.
-     * 
+     *
      * <p>This is equivalent to calling role.relation("users")</p>
-     * 
-     * @return {Parse.Relation} the relation for the users belonging to this
+     *
+     * @return {AV.Relation} the relation for the users belonging to this
      *     role.
      */
     getUsers: function() {
       return this.relation("users");
     },
-    
+
     /**
-     * Gets the Parse.Relation for the Parse.Roles that are direct
+     * Gets the AV.Relation for the AV.Roles that are direct
      * children of this role. These roles' users are granted any privileges that
      * this role has been granted (e.g. read or write access through ACLs). You
      * can add or remove child roles from this role through this relation.
-     * 
+     *
      * <p>This is equivalent to calling role.relation("roles")</p>
-     * 
-     * @return {Parse.Relation} the relation for the roles belonging to this
+     *
+     * @return {AV.Relation} the relation for the roles belonging to this
      *     role.
      */
     getRoles: function() {
       return this.relation("roles");
     },
-    
+
     /**
      * @ignore
      */
@@ -6188,21 +5769,21 @@
           // Check to see if the objectId being set matches this.id.
           // This happens during a fetch -- the id is set before calling fetch.
           // Let the name be set in this case.
-          return new Parse.Error(Parse.Error.OTHER_CAUSE,
+          return new AV.Error(AV.Error.OTHER_CAUSE,
               "A role's name can only be set before it has been saved.");
         }
         if (!_.isString(newName)) {
-          return new Parse.Error(Parse.Error.OTHER_CAUSE,
+          return new AV.Error(AV.Error.OTHER_CAUSE,
               "A role's name must be a String.");
         }
         if (!(/^[0-9a-zA-Z\-_ ]+$/).test(newName)) {
-          return new Parse.Error(Parse.Error.OTHER_CAUSE,
+          return new AV.Error(AV.Error.OTHER_CAUSE,
               "A role's name can only contain alphanumeric characters, _," +
               " -, and spaces.");
         }
       }
-      if (Parse.Object.prototype.validate) {
-        return Parse.Object.prototype.validate.call(this, attrs, options);
+      if (AV.Object.prototype.validate) {
+        return AV.Object.prototype.validate.call(this, attrs, options);
       }
       return false;
     }
@@ -6212,25 +5793,25 @@
 
 /*global _: false */
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * Creates a new instance with the given models and options.  Typically, you
    * will not call this method directly, but will instead make a subclass using
-   * <code>Parse.Collection.extend</code>.
+   * <code>AV.Collection.extend</code>.
    *
-   * @param {Array} models An array of instances of <code>Parse.Object</code>.
+   * @param {Array} models An array of instances of <code>AV.Object</code>.
    *
    * @param {Object} options An optional object with Backbone-style options.
    * Valid options are:<ul>
-   *   <li>model: The Parse.Object subclass that this collection contains.
-   *   <li>query: An instance of Parse.Query to use when fetching items.
+   *   <li>model: The AV.Object subclass that this collection contains.
+   *   <li>query: An instance of AV.Query to use when fetching items.
    *   <li>comparator: A string property name or function to sort by.
    * </ul>
    *
-   * @see Parse.Collection.extend
+   * @see AV.Collection.extend
    *
    * @class
    *
@@ -6239,7 +5820,7 @@
    * <a href="http://documentcloud.github.com/backbone/#Collection">Backbone
    * documentation</a>.</p>
    */
-  Parse.Collection = function(models, options) {
+  AV.Collection = function(models, options) {
     options = options || {};
     if (options.comparator) {
       this.comparator = options.comparator;
@@ -6258,13 +5839,13 @@
   };
 
   // Define the Collection's inheritable methods.
-  _.extend(Parse.Collection.prototype, Parse.Events,
-      /** @lends Parse.Collection.prototype */ {
+  _.extend(AV.Collection.prototype, AV.Events,
+      /** @lends AV.Collection.prototype */ {
 
-    // The default model for a collection is just a Parse.Object.
+    // The default model for a collection is just a AV.Object.
     // This should be overridden in most cases.
-    
-    model: Parse.Object,
+
+    model: AV.Object,
 
     /**
      * Initialize is an empty function by default. Override it with your own
@@ -6283,15 +5864,6 @@
     /**
      * Add a model, or list of models to the set. Pass **silent** to avoid
      * firing the `add` event for every new model.
-     *
-     * @param {Array} models An array of instances of <code>Parse.Object</code>.
-     *
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are:<ul>
-     *   <li>at: The index at which to add the models.
-     *   <li>silent: Set to true to avoid firing the `add` event for every new
-     *   model.
-     * </ul>
      */
     add: function(models, options) {
       var i, index, length, model, cid, id, cids = {}, ids = {};
@@ -6312,7 +5884,7 @@
                           "to a collection twice");
         }
         id = model.id;
-        if (!Parse._isNullOrUndefined(id) && (ids[id] || this._byId[id])) {
+        if (!AV._isNullOrUndefined(id) && (ids[id] || this._byId[id])) {
           throw new Error("Duplicate id: can't add the same model " +
                           "to a collection twice");
         }
@@ -6333,7 +5905,7 @@
       // Insert models into the collection, re-sorting if needed, and triggering
       // `add` events unless silenced.
       this.length += length;
-      index = Parse._isNullOrUndefined(options.at) ? 
+      index = AV._isNullOrUndefined(options.at) ?
           this.models.length : options.at;
       this.models.splice.apply(this.models, [index, 0].concat(models));
       if (this.comparator) {
@@ -6355,13 +5927,6 @@
     /**
      * Remove a model, or a list of models from the set. Pass silent to avoid
      * firing the <code>remove</code> event for every model removed.
-     *
-     * @param {Array} models The model or list of models to remove from the
-     *   collection.
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are: <ul>
-     *   <li>silent: Set to true to avoid firing the `remove` event.
-     * </ul>
      */
     remove: function(models, options) {
       var i, l, index, model;
@@ -6388,8 +5953,6 @@
 
     /**
      * Gets a model from the set by id.
-     * @param {String} id The Parse objectId identifying the Parse.Object to
-     * fetch from this collection.
      */
     get: function(id) {
       return id && this._byId[id.id || id];
@@ -6397,8 +5960,6 @@
 
     /**
      * Gets a model from the set by client id.
-     * @param {} cid The Backbone collection id identifying the Parse.Object to
-     * fetch from this collection.
      */
     getByCid: function(cid) {
       return cid && this._byCid[cid.cid || cid];
@@ -6406,8 +5967,6 @@
 
     /**
      * Gets the model at the given index.
-     *
-     * @param {Number} index The index of the model to return.
      */
     at: function(index) {
       return this.models[index];
@@ -6417,10 +5976,6 @@
      * Forces the collection to re-sort itself. You don't need to call this
      * under normal circumstances, as the set will maintain sort order as each
      * item is added.
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are: <ul>
-     *   <li>silent: Set to true to avoid firing the `reset` event.
-     * </ul>
      */
     sort: function(options) {
       options = options || {};
@@ -6441,8 +5996,6 @@
 
     /**
      * Plucks an attribute from each model in the collection.
-     * @param {String} attr The attribute to return from each model in the
-     * collection.
      */
     pluck: function(attr) {
       return _.map(this.models, function(model){ return model.get(attr); });
@@ -6452,19 +6005,12 @@
      * When you have more items than you want to add or remove individually,
      * you can reset the entire set with a new list of models, without firing
      * any `add` or `remove` events. Fires `reset` when finished.
-     *
-     * @param {Array} models The model or list of models to remove from the
-     *   collection.
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are: <ul>
-     *   <li>silent: Set to true to avoid firing the `reset` event.
-     * </ul>
      */
     reset: function(models, options) {
       var self = this;
       models = models || [];
       options = options || {};
-      Parse._arrayEach(this.models, function(model) {
+      AV._arrayEach(this.models, function(model) {
         self._removeReference(model);
       });
       this._reset();
@@ -6479,16 +6025,6 @@
      * Fetches the default set of models for this collection, resetting the
      * collection when they arrive. If `add: true` is passed, appends the
      * models to the collection instead of resetting.
-     *
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are:<ul>
-     *   <li>silent: Set to true to avoid firing `add` or `reset` events for
-     *   models fetched by this fetch.
-     *   <li>success: A Backbone-style success callback.
-     *   <li>error: An Backbone-style error callback.
-     *   <li>useMasterKey: In Cloud Code and Node only, uses the Master Key for
-     *       this request.
-     * </ul>
      */
     fetch: function(options) {
       options = _.clone(options) || {};
@@ -6496,10 +6032,8 @@
         options.parse = true;
       }
       var collection = this;
-      var query = this.query || new Parse.Query(this.model);
-      return query.find({
-        useMasterKey: options.useMasterKey
-      }).then(function(results) {
+      var query = this.query || new AV.Query(this.model);
+      return query.find().then(function(results) {
         if (options.add) {
           collection.add(results, options);
         } else {
@@ -6513,19 +6047,6 @@
      * Creates a new instance of a model in this collection. Add the model to
      * the collection immediately, unless `wait: true` is passed, in which case
      * we wait for the server to agree.
-     *
-     * @param {Parse.Object} model The new model to create and add to the
-     *   collection.
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are:<ul>
-     *   <li>wait: Set to true to wait for the server to confirm creation of the
-     *       model before adding it to the collection.
-     *   <li>silent: Set to true to avoid firing an `add` event.
-     *   <li>success: A Backbone-style success callback.
-     *   <li>error: An Backbone-style error callback.
-     *   <li>useMasterKey: In Cloud Code and Node only, uses the Master Key for
-     *       this request.
-     * </ul>
      */
     create: function(model, options) {
       var coll = this;
@@ -6584,7 +6105,7 @@
      * Prepare a model or hash of attributes to be added to this collection.
      */
     _prepareModel: function(model, options) {
-      if (!(model instanceof Parse.Object)) {
+      if (!(model instanceof AV.Object)) {
         var attrs = model;
         options.collection = this;
         model = new this.model(attrs, options);
@@ -6637,15 +6158,15 @@
     'shuffle', 'lastIndexOf', 'isEmpty', 'groupBy'];
 
   // Mix in each Underscore method as a proxy to `Collection#models`.
-  Parse._arrayEach(methods, function(method) {
-    Parse.Collection.prototype[method] = function() {
+  AV._arrayEach(methods, function(method) {
+    AV.Collection.prototype[method] = function() {
       return _[method].apply(_, [this.models].concat(_.toArray(arguments)));
     };
   });
 
   /**
-   * Creates a new subclass of <code>Parse.Collection</code>.  For example,<pre>
-   *   var MyCollection = Parse.Collection.extend({
+   * Creates a new subclass of <code>AV.Collection</code>.  For example,<pre>
+   *   var MyCollection = AV.Collection.extend({
    *     // Instance properties
    *
    *     model: MyClass,
@@ -6668,20 +6189,20 @@
    * @function
    * @param {Object} instanceProps Instance properties for the collection.
    * @param {Object} classProps Class properies for the collection.
-   * @return {Class} A new subclass of <code>Parse.Collection</code>.
+   * @return {Class} A new subclass of <code>AV.Collection</code>.
    */
-  Parse.Collection.extend = Parse._extend;
+  AV.Collection.extend = AV._extend;
 
 }(this));
 
 /*global _: false, document: false */
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
-   * Creating a Parse.View creates its initial element outside of the DOM,
+   * Creating a AV.View creates its initial element outside of the DOM,
    * if an existing element is not provided...
    * @class
    *
@@ -6692,7 +6213,7 @@
    * documentation</a>.</p>
    * <p><strong><em>Available in the client SDK only.</em></strong></p>
    */
-  Parse.View = function(options) {
+  AV.View = function(options) {
     this.cid = _.uniqueId('view');
     this._configure(options || {});
     this._ensureElement();
@@ -6704,13 +6225,13 @@
   var eventSplitter = /^(\S+)\s*(.*)$/;
 
   // List of view options to be merged as properties.
-  
+
   var viewOptions = ['model', 'collection', 'el', 'id', 'attributes',
                      'className', 'tagName'];
 
-  // Set up all inheritable **Parse.View** properties and methods.
-  _.extend(Parse.View.prototype, Parse.Events,
-           /** @lends Parse.View.prototype */ {
+  // Set up all inheritable **AV.View** properties and methods.
+  _.extend(AV.View.prototype, AV.Events,
+           /** @lends AV.View.prototype */ {
 
     // The default `tagName` of a View's element is `"div"`.
     tagName: 'div',
@@ -6757,10 +6278,10 @@
     make: function(tagName, attributes, content) {
       var el = document.createElement(tagName);
       if (attributes) {
-        Parse.$(el).attr(attributes);
+        AV.$(el).attr(attributes);
       }
       if (content) {
-        Parse.$(el).html(content);
+        AV.$(el).html(content);
       }
       return el;
     },
@@ -6770,7 +6291,7 @@
      * re-delegation.
      */
     setElement: function(element, delegate) {
-      this.$el = Parse.$(element);
+      this.$el = AV.$(element);
       this.el = this.$el[0];
       if (delegate !== false) {
         this.delegateEvents();
@@ -6796,13 +6317,13 @@
      * not `change`, `submit`, and `reset` in Internet Explorer.
      */
     delegateEvents: function(events) {
-      events = events || Parse._getValue(this, 'events');
+      events = events || AV._getValue(this, 'events');
       if (!events) {
         return;
       }
       this.undelegateEvents();
       var self = this;
-      Parse._objectEach(events, function(method, key) {
+      AV._objectEach(events, function(method, key) {
         if (!_.isFunction(method)) {
           method = self[events[key]];
         }
@@ -6856,7 +6377,7 @@
      */
     _ensureElement: function() {
       if (!this.el) {
-        var attrs = Parse._getValue(this, 'attributes') || {};
+        var attrs = AV._getValue(this, 'attributes') || {};
         if (this.id) {
           attrs.id = this.id;
         }
@@ -6875,42 +6396,32 @@
    * @function
    * @param {Object} instanceProps Instance properties for the view.
    * @param {Object} classProps Class properies for the view.
-   * @return {Class} A new subclass of <code>Parse.View</code>.
+   * @return {Class} A new subclass of <code>AV.View</code>.
    */
-  Parse.View.extend = Parse._extend;
+  AV.View.extend = AV._extend;
 
 }(this));
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * @class
    *
-   * <p>A Parse.User object is a local representation of a user persisted to the
-   * Parse cloud. This class is a subclass of a Parse.Object, and retains the
-   * same functionality of a Parse.Object, but also extends it with various
+   * <p>A AV.User object is a local representation of a user persisted to the
+   * AV cloud. This class is a subclass of a AV.Object, and retains the
+   * same functionality of a AV.Object, but also extends it with various
    * user specific methods, like authentication, signing up, and validation of
    * uniqueness.</p>
    */
-  Parse.User = Parse.Object.extend("_User", /** @lends Parse.User.prototype */ {
+  AV.User = AV.Object.extend("_User", /** @lends AV.User.prototype */ {
     // Instance Variables
     _isCurrentUser: false,
 
 
     // Instance Methods
-    
-    /**
-     * Merges another object's attributes into this object.
-     */
-    _mergeFromObject: function(other) {
-      if (other.getSessionToken()) {
-        this._sessionToken = other.getSessionToken();      
-      }    
-      Parse.User.__super__._mergeFromObject.call(this, other);
-    },    
 
     /**
      * Internal method to handle special fields in a _User response.
@@ -6920,7 +6431,7 @@
         this._sessionToken = attrs.sessionToken;
         delete attrs.sessionToken;
       }
-      Parse.User.__super__._mergeMagicFields.call(this, attrs);
+      AV.User.__super__._mergeMagicFields.call(this, attrs);
     },
 
     /**
@@ -6935,7 +6446,7 @@
       if (!authData) {
         return;
       }
-      Parse._objectEach(this.get('authData'), function(value, key) {
+      AV._objectEach(this.get('authData'), function(value, key) {
         if (!authData[key]) {
           delete authData[key];
         }
@@ -6952,7 +6463,7 @@
       }
 
       var self = this;
-      Parse._objectEach(this.get('authData'), function(value, key) {
+      AV._objectEach(this.get('authData'), function(value, key) {
         self._synchronizeAuthData(key);
       });
     },
@@ -6968,7 +6479,7 @@
       var authType;
       if (_.isString(provider)) {
         authType = provider;
-        provider = Parse.User._authProviders[authType];
+        provider = AV.User._authProviders[authType];
       } else {
         authType = provider.getAuthType();
       }
@@ -6994,7 +6505,7 @@
       this._rebuildEstimatedDataForKey("password");
       this._refreshCache();
       if (makeCurrent || this.isCurrent()) {
-        Parse.User._saveCurrentUser(this);
+        AV.User._saveCurrentUser(this);
       }
     },
 
@@ -7006,7 +6517,7 @@
       var authType;
       if (_.isString(provider)) {
         authType = provider;
-        provider = Parse.User._authProviders[provider];
+        provider = AV.User._authProviders[provider];
       } else {
         authType = provider.getAuthType();
       }
@@ -7026,7 +6537,7 @@
         return this.save({'authData': authData}, newOptions);
       } else {
         var self = this;
-        var promise = new Parse.Promise();
+        var promise = new AV.Promise();
         provider.authenticate({
           success: function(provider, result) {
             self._linkWith(provider, {
@@ -7055,7 +6566,7 @@
       var authType;
       if (_.isString(provider)) {
         authType = provider;
-        provider = Parse.User._authProviders[provider];
+        provider = AV.User._authProviders[provider];
       } else {
         authType = provider.getAuthType();
       }
@@ -7094,7 +6605,7 @@
         return;
       }
       var self = this;
-      Parse._objectEach(this.get('authData'), function(value, key) {
+      AV._objectEach(this.get('authData'), function(value, key) {
         self._logOutWith(key);
       });
     },
@@ -7108,7 +6619,7 @@
         return;
       }
       if (_.isString(provider)) {
-        provider = Parse.User._authProviders[provider];
+        provider = AV.User._authProviders[provider];
       }
       if (provider && provider.deauthenticate) {
         provider.deauthenticate();
@@ -7117,7 +6628,7 @@
 
     /**
      * Signs up a new user. You should call this instead of save for
-     * new Parse.Users. This will create a new Parse.User on the server, and
+     * new AV.Users. This will create a new AV.User on the server, and
      * also persist the session on disk so that you can access the user using
      * <code>current</code>.
      *
@@ -7127,9 +6638,9 @@
      *
      * @param {Object} attrs Extra fields to set on the new user, or null.
      * @param {Object} options A Backbone-style options object.
-     * @return {Parse.Promise} A promise that is fulfilled when the signup
+     * @return {AV.Promise} A promise that is fulfilled when the signup
      *     finishes.
-     * @see Parse.User.signUp
+     * @see AV.User.signUp
      */
     signUp: function(attrs, options) {
       var error;
@@ -7137,24 +6648,24 @@
 
       var username = (attrs && attrs.username) || this.get("username");
       if (!username || (username === "")) {
-        error = new Parse.Error(
-            Parse.Error.OTHER_CAUSE,
+        error = new AV.Error(
+            AV.Error.OTHER_CAUSE,
             "Cannot sign up user with an empty name.");
         if (options && options.error) {
           options.error(this, error);
         }
-        return Parse.Promise.error(error);
+        return AV.Promise.error(error);
       }
 
       var password = (attrs && attrs.password) || this.get("password");
       if (!password || (password === "")) {
-        error = new Parse.Error(
-            Parse.Error.OTHER_CAUSE,
+        error = new AV.Error(
+            AV.Error.OTHER_CAUSE,
             "Cannot sign up user with an empty password.");
         if (options && options.error) {
           options.error(this, error);
         }
-        return Parse.Promise.error(error);
+        return AV.Promise.error(error);
       }
 
       // Overridden so that the user can be made the current user.
@@ -7169,7 +6680,7 @@
     },
 
     /**
-     * Logs in a Parse.User. On success, this saves the session to localStorage,
+     * Logs in a AV.User. On success, this saves the session to localStorage,
      * so you can retrieve the currently logged in user using
      * <code>current</code>.
      *
@@ -7178,19 +6689,13 @@
      * <p>Calls options.success or options.error on completion.</p>
      *
      * @param {Object} options A Backbone-style options object.
-     * @see Parse.User.logIn
-     * @return {Parse.Promise} A promise that is fulfilled with the user when
+     * @see AV.User.logIn
+     * @return {AV.Promise} A promise that is fulfilled with the user when
      *     the login is complete.
      */
     logIn: function(options) {
       var model = this;
-      options = options || {};
-      var request = Parse._request({
-        route: "login",
-        method: "GET",
-        useMasterKey: options.useMasterKey,
-        data: this.toJSON()
-      });
+      var request = AV._request("login", null, null, "GET", this.toJSON());
       return request.then(function(resp, status, xhr) {
         var serverAttrs = model.parse(resp, status, xhr);
         model._finishFetch(serverAttrs);
@@ -7200,7 +6705,7 @@
     },
 
     /**
-     * @see Parse.Object#save
+     * @see AV.Object#save
      */
     save: function(arg1, arg2, arg3) {
       var i, attrs, current, options, saved;
@@ -7221,11 +6726,77 @@
           options.success.apply(this, arguments);
         }
       };
-      return Parse.Object.prototype.save.call(this, attrs, newOptions);
+      return AV.Object.prototype.save.call(this, attrs, newOptions);
     },
 
     /**
-     * @see Parse.Object#fetch
+     * Follow a user
+     * @since 0.3.0
+     * @param {} target The target user or user's objectId to follow.
+     * @param {Object} options An optional Backbone-like options object with
+     *     success and error callbacks that will be invoked once the iteration
+     *     has finished.
+     */
+    follow: function(target, options){
+      if(!this.id){
+          throw "Please signin.";
+      }
+      if(!target){
+          throw "Invalid target user.";
+      }
+      var userObjectId = (typeof target === 'string') ? target: target.id;
+      if(!userObjectId){
+          throw "Invalid target user.";
+      }
+      var route = 'users/' + this.id + '/friendship/' + userObjectId;
+      var request = AV._request(route, null, null, 'POST', null);
+      return request._thenRunCallbacks(options);
+    },
+
+    /**
+     * Unfollow a user.
+     * @since 0.3.0
+     * @param {} target The target user or user's objectId to unfollow.
+     * @param options {Object} An optional Backbone-like options object with
+     *     success and error callbacks that will be invoked once the iteration
+     *     has finished.
+     */
+    unfollow: function(target, options){
+      if(!this.id){
+          throw "Please signin.";
+      }
+      if(!target){
+          throw "Invalid target user.";
+      }
+      var userObjectId = (typeof target === 'string') ? target: target.id;
+      if(!userObjectId){
+          throw "Invalid target user.";
+      }
+      var route = 'users/' + this.id + '/friendship/' + userObjectId;
+      var request = AV._request(route, null, null, 'DELETE', null);
+      return request._thenRunCallbacks(options);
+    },
+
+    /**
+     *Create a follower query to query the user's followers.
+     * @since 0.3.0
+     * @see AV.User#followerQuery
+     */
+    followerQuery: function() {
+        return AV.User.followerQuery(this.id);
+    },
+
+    /**
+     *Create a followee query to query the user's followees.
+     * @since 0.3.0
+     * @see AV.User#followeeQuery
+     */
+    followeeQuery: function() {
+        return AV.User.followeeQuery(this.id);
+    },
+
+    /**
+     * @see AV.Object#fetch
      */
     fetch: function(options) {
       var newOptions = options ? _.clone(options) : {};
@@ -7235,12 +6806,12 @@
           options.success.apply(this, arguments);
         }
       };
-      return Parse.Object.prototype.fetch.call(this, newOptions);
+      return AV.Object.prototype.fetch.call(this, newOptions);
     },
 
     /**
      * Returns true if <code>current</code> would return this user.
-     * @see Parse.User#current
+     * @see AV.User#current
      */
     isCurrent: function() {
       return this._isCurrentUser;
@@ -7249,7 +6820,7 @@
     /**
      * Returns get("username").
      * @return {String}
-     * @see Parse.Object#get
+     * @see AV.Object#get
      */
     getUsername: function() {
       return this.get("username");
@@ -7260,7 +6831,7 @@
      * @param {String} username
      * @param {Object} options A Backbone-style options object.
      * @return {Boolean}
-     * @see Parse.Object.set
+     * @see AV.Object.set
      */
     setUsername: function(username, options) {
       return this.set("username", username, options);
@@ -7271,7 +6842,7 @@
      * @param {String} password
      * @param {Object} options A Backbone-style options object.
      * @return {Boolean}
-     * @see Parse.Object.set
+     * @see AV.Object.set
      */
     setPassword: function(password, options) {
       return this.set("password", password, options);
@@ -7280,7 +6851,7 @@
     /**
      * Returns get("email").
      * @return {String}
-     * @see Parse.Object#get
+     * @see AV.Object#get
      */
     getEmail: function() {
       return this.get("email");
@@ -7291,7 +6862,7 @@
      * @param {String} email
      * @param {Object} options A Backbone-style options object.
      * @return {Boolean}
-     * @see Parse.Object.set
+     * @see AV.Object.set
      */
     setEmail: function(email, options) {
       return this.set("email", email, options);
@@ -7303,20 +6874,10 @@
      */
     authenticated: function() {
       return !!this._sessionToken &&
-          (Parse.User.current() && Parse.User.current().id === this.id);
-    },
-
-    /**
-     * Returns the session token for this user, if the user has been logged in,
-     * or if it is the result of a query with the master key. Otherwise, returns
-     * undefined.
-     * @return {String} the session token, or undefined
-     */
-    getSessionToken: function() {
-      return this._sessionToken;
+          (AV.User.current() && AV.User.current().id === this.id);
     }
 
-  }, /** @lends Parse.User */ {
+  }, /** @lends AV.User */ {
     // Class Variables
 
     // The currently logged-in user.
@@ -7333,15 +6894,12 @@
     // The mapping of auth provider names to actual providers
     _authProviders: {},
 
-    // Whether to rewrite className User to _User
-    _performUserRewrite: true,
-
 
     // Class Methods
 
     /**
      * Signs up a new user with a username (or email) and password.
-     * This will create a new Parse.User on the server, and also persist the
+     * This will create a new AV.User on the server, and also persist the
      * session in localStorage so that you can access the user using
      * {@link #current}.
      *
@@ -7351,15 +6909,15 @@
      * @param {String} password The password to sign up with.
      * @param {Object} attrs Extra fields to set on the new user.
      * @param {Object} options A Backbone-style options object.
-     * @return {Parse.Promise} A promise that is fulfilled with the user when
+     * @return {AV.Promise} A promise that is fulfilled with the user when
      *     the signup completes.
-     * @see Parse.User#signUp
+     * @see AV.User#signUp
      */
     signUp: function(username, password, attrs, options) {
       attrs = attrs || {};
       attrs.username = username;
       attrs.password = password;
-      var user = Parse.Object._create("_User");
+      var user = AV.Object._create("_User");
       return user.signUp(attrs, options);
     },
 
@@ -7373,45 +6931,14 @@
      * @param {String} username The username (or email) to log in with.
      * @param {String} password The password to log in with.
      * @param {Object} options A Backbone-style options object.
-     * @return {Parse.Promise} A promise that is fulfilled with the user when
+     * @return {AV.Promise} A promise that is fulfilled with the user when
      *     the login completes.
-     * @see Parse.User#logIn
+     * @see AV.User#logIn
      */
     logIn: function(username, password, options) {
-      var user = Parse.Object._create("_User");
+      var user = AV.Object._create("_User");
       user._finishFetch({ username: username, password: password });
       return user.logIn(options);
-    },
-
-    /**
-     * Logs in a user with a session token. On success, this saves the session
-     * to disk, so you can retrieve the currently logged in user using
-     * <code>current</code>.
-     *
-     * <p>Calls options.success or options.error on completion.</p>
-     *
-     * @param {String} sessionToken The sessionToken to log in with.
-     * @param {Object} options A Backbone-style options object.
-     * @return {Parse.Promise} A promise that is fulfilled with the user when
-     *     the login completes.
-     */
-    become: function(sessionToken, options) {
-      options = options || {};
-
-      var user = Parse.Object._create("_User");
-      return Parse._request({
-        route: "users",
-        className: "me",
-        method: "GET",
-        useMasterKey: options.useMasterKey,
-        sessionToken: sessionToken
-      }).then(function(resp, status, xhr) {
-        var serverAttrs = user.parse(resp, status, xhr);
-        user._finishFetch(serverAttrs);
-        user._handleSaveResult(true);
-        return user;
-
-      })._thenRunCallbacks(options, user);
     },
 
     /**
@@ -7420,20 +6947,50 @@
      * <code>current</code> will return <code>null</code>.
      */
     logOut: function() {
-      if (Parse.User._currentUser !== null) {
-        Parse.User._currentUser._logOutWithAll();
-        Parse.User._currentUser._isCurrentUser = false;
+      if (AV.User._currentUser !== null) {
+        AV.User._currentUser._logOutWithAll();
+        AV.User._currentUser._isCurrentUser = false;
       }
-      Parse.User._currentUserMatchesDisk = true;
-      Parse.User._currentUser = null;
-      Parse.localStorage.removeItem(
-          Parse._getParsePath(Parse.User._CURRENT_USER_KEY));
+      AV.User._currentUserMatchesDisk = true;
+      AV.User._currentUser = null;
+      AV.localStorage.removeItem(
+          AV._getAVPath(AV.User._CURRENT_USER_KEY));
+    },
+
+    /**
+     *Create a follower query for special user to query the user's followers.
+     * @param userObjectId {String} The user object id.
+     * @since 0.3.0
+     */
+    followerQuery: function(userObjectId) {
+        if(!userObjectId || typeof userObjectId !='string'){
+          throw "Invalid user object id.";
+        }
+        var query = new AV.FriendShipQuery('_Follower');
+        query._friendshipTag ='follower';
+        query.equalTo('user', AV.Object.createWithoutData('_User', userObjectId));
+        return query;
+    },
+
+    /**
+     *Create a followee query for special user to query the user's followees.
+     * @param userObjectId {String} The user object id.
+     * @since 0.3.0
+     */
+    followeeQuery: function(userObjectId) {
+        if(!userObjectId || typeof userObjectId !='string'){
+          throw "Invalid user object id.";
+        }
+        var query = new AV.FriendShipQuery('_Followee');
+        query._friendshipTag ='followee';
+        query.equalTo('user', AV.Object.createWithoutData('_User', userObjectId));
+        return query;
     },
 
     /**
      * Requests a password reset email to be sent to the specified email address
      * associated with the user account. This email allows the user to securely
-     * reset their password on the Parse site.
+     * reset their password on the AV site.
      *
      * <p>Calls options.success or options.error on completion.</p>
      *
@@ -7442,97 +6999,81 @@
      * @param {Object} options A Backbone-style options object.
      */
     requestPasswordReset: function(email, options) {
-      options = options || {};
-      var request = Parse._request({
-        route: "requestPasswordReset",
-        method: "POST",
-        useMasterKey: options.useMasterKey,
-        data: { email: email }
-      });
+      var json = { email: email };
+      var request = AV._request("requestPasswordReset", null, null, "POST",
+                                   json);
       return request._thenRunCallbacks(options);
     },
 
     /**
-     * Retrieves the currently logged in ParseUser with a valid session,
+     * Retrieves the currently logged in AVUser with a valid session,
      * either from memory or localStorage, if necessary.
-     * @return {Parse.Object} The currently logged in Parse.User.
+     * @return {AV.Object} The currently logged in AV.User.
      */
     current: function() {
-      if (Parse.User._currentUser) {
-        return Parse.User._currentUser;
+      if (AV.User._currentUser) {
+        return AV.User._currentUser;
       }
 
-      if (Parse.User._currentUserMatchesDisk) {
-        
-        return Parse.User._currentUser;
+      if (AV.User._currentUserMatchesDisk) {
+
+        return AV.User._currentUser;
       }
 
       // Load the user from local storage.
-      Parse.User._currentUserMatchesDisk = true;
+      AV.User._currentUserMatchesDisk = true;
 
-      var userData = Parse.localStorage.getItem(Parse._getParsePath(
-          Parse.User._CURRENT_USER_KEY));
+      var userData = AV.localStorage.getItem(AV._getAVPath(
+          AV.User._CURRENT_USER_KEY));
       if (!userData) {
-        
+
         return null;
       }
-      Parse.User._currentUser = Parse.Object._create("_User");
-      Parse.User._currentUser._isCurrentUser = true;
+      AV.User._currentUser = AV.Object._create("_User");
+      AV.User._currentUser._isCurrentUser = true;
 
       var json = JSON.parse(userData);
-      Parse.User._currentUser.id = json._id;
+      AV.User._currentUser.id = json._id;
       delete json._id;
-      Parse.User._currentUser._sessionToken = json._sessionToken;
+      AV.User._currentUser._sessionToken = json._sessionToken;
       delete json._sessionToken;
-      Parse.User._currentUser._finishFetch(json);
+      AV.User._currentUser.set(json);
 
-      Parse.User._currentUser._synchronizeAllAuthData();
-      Parse.User._currentUser._refreshCache();
-      Parse.User._currentUser._opSetQueue = [{}];
-      return Parse.User._currentUser;
-    },
-
-    /**
-     * Allow someone to define a custom User class without className
-     * being rewritten to _User. The default behavior is to rewrite
-     * User to _User for legacy reasons. This allows developers to
-     * override that behavior.
-     *
-     * @param {Boolean} isAllowed Whether or not to allow custom User class
-     */
-    allowCustomUserClass: function(isAllowed) {
-      this._performUserRewrite = !isAllowed;
+      AV.User._currentUser._synchronizeAllAuthData();
+      AV.User._currentUser._refreshCache();
+      AV.User._currentUser._opSetQueue = [{}];
+      return AV.User._currentUser;
     },
 
     /**
      * Persists a user as currentUser to localStorage, and into the singleton.
      */
     _saveCurrentUser: function(user) {
-      if (Parse.User._currentUser !== user) {
-        Parse.User.logOut();
+      if (AV.User._currentUser !== user) {
+        AV.User.logOut();
       }
       user._isCurrentUser = true;
-      Parse.User._currentUser = user;
-      Parse.User._currentUserMatchesDisk = true;
+      AV.User._currentUser = user;
+      AV.User._currentUserMatchesDisk = true;
 
       var json = user.toJSON();
       json._id = user.id;
       json._sessionToken = user._sessionToken;
-      Parse.localStorage.setItem(
-          Parse._getParsePath(Parse.User._CURRENT_USER_KEY),
+      AV.localStorage.setItem(
+          AV._getAVPath(AV.User._CURRENT_USER_KEY),
           JSON.stringify(json));
     },
 
     _registerAuthenticationProvider: function(provider) {
-      Parse.User._authProviders[provider.getAuthType()] = provider;
+      AV.User._authProviders[provider.getAuthType()] = provider;
       // Synchronize the current user with the auth provider.
-      if (Parse.User.current()) {
-        Parse.User.current()._synchronizeAuthData(provider.getAuthType());
+      if (AV.User.current()) {
+        AV.User.current()._synchronizeAuthData(provider.getAuthType());
       }
     },
 
     _logInWith: function(provider, options) {
-      var user = Parse.Object._create("_User");
+      var user = AV.Object._create("_User");
       return user._linkWith(provider, options);
     }
 
@@ -7540,71 +7081,71 @@
 }(this));
 
 
-// Parse.Query is a way to create a list of Parse.Objects.
+// AV.Query is a way to create a list of AV.Objects.
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
-   * Creates a new parse Parse.Query for the given Parse.Object subclass.
+   * Creates a new avoscloud AV.Query for the given AV.Object subclass.
    * @param objectClass -
-   *   An instance of a subclass of Parse.Object, or a Parse className string.
+   *   An instance of a subclass of AV.Object, or a AV className string.
    * @class
    *
-   * <p>Parse.Query defines a query that is used to fetch Parse.Objects. The
+   * <p>AV.Query defines a query that is used to fetch AV.Objects. The
    * most common use case is finding all objects that match a query through the
    * <code>find</code> method. For example, this sample code fetches all objects
    * of class <code>MyClass</code>. It calls a different function depending on
    * whether the fetch succeeded or not.
-   * 
+   *
    * <pre>
-   * var query = new Parse.Query(MyClass);
+   * var query = new AV.Query(MyClass);
    * query.find({
    *   success: function(results) {
-   *     // results is an array of Parse.Object.
+   *     // results is an array of AV.Object.
    *   },
    *
    *   error: function(error) {
-   *     // error is an instance of Parse.Error.
+   *     // error is an instance of AV.Error.
    *   }
    * });</pre></p>
-   * 
-   * <p>A Parse.Query can also be used to retrieve a single object whose id is
+   *
+   * <p>A AV.Query can also be used to retrieve a single object whose id is
    * known, through the get method. For example, this sample code fetches an
    * object of class <code>MyClass</code> and id <code>myId</code>. It calls a
    * different function depending on whether the fetch succeeded or not.
-   * 
+   *
    * <pre>
-   * var query = new Parse.Query(MyClass);
+   * var query = new AV.Query(MyClass);
    * query.get(myId, {
    *   success: function(object) {
-   *     // object is an instance of Parse.Object.
+   *     // object is an instance of AV.Object.
    *   },
    *
    *   error: function(object, error) {
-   *     // error is an instance of Parse.Error.
+   *     // error is an instance of AV.Error.
    *   }
    * });</pre></p>
-   * 
-   * <p>A Parse.Query can also be used to count the number of objects that match
+   *
+   * <p>A AV.Query can also be used to count the number of objects that match
    * the query without retrieving all of those objects. For example, this
    * sample code counts the number of objects of the class <code>MyClass</code>
    * <pre>
-   * var query = new Parse.Query(MyClass);
+   * var query = new AV.Query(MyClass);
    * query.count({
    *   success: function(number) {
    *     // There are number instances of MyClass.
    *   },
    *
    *   error: function(error) {
-   *     // error is an instance of Parse.Error.
+   *     // error is an instance of AV.Error.
    *   }
    * });</pre></p>
    */
-  Parse.Query = function(objectClass) {
+  AV.Query = function(objectClass) {
     if (_.isString(objectClass)) {
-      objectClass = Parse.Object._getSubclass(objectClass);
+      objectClass = AV.Object._getSubclass(objectClass);
     }
 
     this.objectClass = objectClass;
@@ -7619,19 +7160,19 @@
   };
 
   /**
-   * Constructs a Parse.Query that is the OR of the passed in queries.  For
+   * Constructs a AV.Query that is the OR of the passed in queries.  For
    * example:
-   * <pre>var compoundQuery = Parse.Query.or(query1, query2, query3);</pre>
+   * <pre>var compoundQuery = AV.Query.or(query1, query2, query3);</pre>
    *
    * will create a compoundQuery that is an or of the query1, query2, and
    * query3.
-   * @param {...Parse.Query} var_args The list of queries to OR.
-   * @return {Parse.Query} The query that is the OR of the passed in queries.
+   * @param {...AV.Query} var_args The list of queries to OR.
+   * @return {AV.Query} The query that is the OR of the passed in queries.
    */
-  Parse.Query.or = function() {
+  AV.Query.or = function() {
     var queries = _.toArray(arguments);
     var className = null;
-    Parse._arrayEach(queries, function(q) {
+    AV._arrayEach(queries, function(q) {
       if (_.isNull(className)) {
         className = q.className;
       }
@@ -7640,50 +7181,46 @@
         throw "All queries must be for the same class";
       }
     });
-    var query = new Parse.Query(className);
+    var query = new AV.Query(className);
     query._orQuery(queries);
     return query;
   };
 
-  Parse.Query.prototype = {
+  AV.Query._extend = AV._extend;
+
+  AV.Query.prototype = {
+     //hook to iterate result. Added by dennis<xzhuang@avoscloud.com>.
+     _processResult: function(obj){
+        return obj;
+    },
+
     /**
-     * Constructs a Parse.Object whose id is already known by fetching data from
+     * Constructs a AV.Object whose id is already known by fetching data from
      * the server.  Either options.success or options.error is called when the
      * find completes.
      *
-     * @param {String} objectId The id of the object to be fetched.
+     * @param {} objectId The id of the object to be fetched.
      * @param {Object} options A Backbone-style options object.
-     * Valid options are:<ul>
-     *   <li>success: A Backbone-style success callback
-     *   <li>error: An Backbone-style error callback.
-     *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-     *     be used for this request.
-     * </ul>
      */
     get: function(objectId, options) {
       var self = this;
       self.equalTo('objectId', objectId);
 
-      var firstOptions = {};
-      if (options && _.has(options, 'useMasterKey')) {
-        firstOptions = { useMasterKey: options.useMasterKey };
-      }
-
-      return self.first(firstOptions).then(function(response) {
+      return self.first().then(function(response) {
         if (response) {
           return response;
         }
 
-        var errorObject = new Parse.Error(Parse.Error.OBJECT_NOT_FOUND,
+        var errorObject = new AV.Error(AV.Error.OBJECT_NOT_FOUND,
                                           "Object not found.");
-        return Parse.Promise.error(errorObject);
+        return AV.Promise.error(errorObject);
 
       })._thenRunCallbacks(options, null);
     },
 
     /**
      * Returns a JSON representation of this query.
-     * @return {Object} The JSON representation of the query.
+     * @return {Object}
      */
     toJSON: function() {
       var params = {
@@ -7703,88 +7240,80 @@
         params.skip = this._skip;
       }
       if (this._order !== undefined) {
-        params.order = this._order.join(",");
+        params.order = this._order;
       }
 
-      Parse._objectEach(this._extraOptions, function(v, k) {
+      AV._objectEach(this._extraOptions, function(v, k) {
         params[k] = v;
       });
 
       return params;
     },
 
+    _newObject: function(response){
+      if (response && response.className) {
+        obj = new AV.Object(response.className);
+      } else {
+        obj = new this.objectClass();
+      }
+      return obj;
+    },
+    _createRequest: function(params){
+      return AV._request("classes", this.className, null, "GET",
+                                   params || this.toJSON());
+    },
+
     /**
-     * Retrieves a list of ParseObjects that satisfy this query.
+     * Retrieves a list of AVObjects that satisfy this query.
      * Either options.success or options.error is called when the find
      * completes.
      *
-     * @param {Object} options A Backbone-style options object. Valid options
-     * are:<ul>
-     *   <li>success: Function to call when the find completes successfully.
-     *   <li>error: Function to call when the find fails.
-     *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-     *     be used for this request.
-     * </ul>
-     *
-     * @return {Parse.Promise} A promise that is resolved with the results when
+     * @param {Object} options A Backbone-style options object.
+     * @return {AV.Promise} A promise that is resolved with the results when
      * the query completes.
      */
     find: function(options) {
       var self = this;
-      options = options || {};
 
-      var request = Parse._request({
-        route: "classes",
-        className: this.className,
-        method: "GET",
-        useMasterKey: options.useMasterKey,
-        data: this.toJSON()
-      });
+      var request = this._createRequest();
 
       return request.then(function(response) {
         return _.map(response.results, function(json) {
-          var obj;
-          if (response.className) {
-            obj = new Parse.Object(response.className);
-          } else {
-            obj = new self.objectClass();
-          }
-          obj._finishFetch(json, true);
+          var obj = self._newObject(response);
+          obj._finishFetch(self._processResult(json), true);
           return obj;
         });
       })._thenRunCallbacks(options);
     },
+
+   /**
+    * Delete objects retrieved by this query.
+    * @param {Object} options Standard options object with success and error
+    *     callbacks.
+    * @return {AV.Promise} A promise that is fulfilled when the save
+    *     completes.
+    */
+     destroyAll: function(options){
+       var self = this;
+       return self.find().then(function(objects){
+           return AV.Object.destroyAll(objects);
+       })._thenRunCallbacks(options);
+     },
 
     /**
      * Counts the number of objects that match this query.
      * Either options.success or options.error is called when the count
      * completes.
      *
-     * @param {Object} options A Backbone-style options object. Valid options
-     * are:<ul>
-     *   <li>success: Function to call when the count completes successfully.
-     *   <li>error: Function to call when the find fails.
-     *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-     *     be used for this request.
-     * </ul>
-     *
-     * @return {Parse.Promise} A promise that is resolved with the count when
+     * @param {Object} options A Backbone-style options object.
+     * @return {AV.Promise} A promise that is resolved with the count when
      * the query completes.
      */
     count: function(options) {
-      var self = this;
-      options = options || {};
-
       var params = this.toJSON();
       params.limit = 0;
       params.count = 1;
-      var request = Parse._request({
-        route: "classes",
-        className: self.className, 
-        method: "GET",
-        useMasterKey: options.useMasterKey,
-        data: params
-      });
+      var request = this._createRequest(params);
 
       return request.then(function(response) {
         return response.count;
@@ -7792,61 +7321,39 @@
     },
 
     /**
-     * Retrieves at most one Parse.Object that satisfies this query.
+     * Retrieves at most one AV.Object that satisfies this query.
      *
      * Either options.success or options.error is called when it completes.
      * success is passed the object if there is one. otherwise, undefined.
      *
-     * @param {Object} options A Backbone-style options object. Valid options
-     * are:<ul>
-     *   <li>success: Function to call when the find completes successfully.
-     *   <li>error: Function to call when the find fails.
-     *   <li>useMasterKey: In Cloud Code and Node only, causes the Master Key to
-     *     be used for this request.
-     * </ul>
-     *
-     * @return {Parse.Promise} A promise that is resolved with the object when
+     * @param {Object} options A Backbone-style options object.
+     * @return {AV.Promise} A promise that is resolved with the object when
      * the query completes.
      */
     first: function(options) {
       var self = this;
-      options = options || {};
 
       var params = this.toJSON();
       params.limit = 1;
-      var request = Parse._request({
-        route: "classes",
-        className: this.className, 
-        method: "GET",
-        useMasterKey: options.useMasterKey,
-        data: params
-      });
+      var request = this._createRequest(params);
 
       return request.then(function(response) {
         return _.map(response.results, function(json) {
-          var obj = new self.objectClass();
-          obj._finishFetch(json, true);
+          var obj = self._newObject();
+          obj._finishFetch(self._processResult(json), true);
           return obj;
         })[0];
       })._thenRunCallbacks(options);
     },
 
     /**
-     * Returns a new instance of Parse.Collection backed by this query.
-     * @param {Array} items An array of instances of <code>Parse.Object</code>
-     *     with which to start this Collection.
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are:<ul>
-     *   <li>model: The Parse.Object subclass that this collection contains.
-     *   <li>query: An instance of Parse.Query to use when fetching items.
-     *   <li>comparator: A string property name or function to sort by.
-     * </ul>
-     * @return {Parse.Collection}
+     * Returns a new instance of AV.Collection backed by this query.
+     * @return {AV.Collection}
      */
     collection: function(items, options) {
       options = options || {};
-      return new Parse.Collection(items, _.extend(options, {
-        model: this.objectClass,
+      return new AV.Collection(items, _.extend(options, {
+        model: this._objectClass || this.objectClass,
         query: this
       }));
     },
@@ -7856,7 +7363,7 @@
      * This is useful for pagination.
      * Default is to skip zero results.
      * @param {Number} n the number of results to skip.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     skip: function(n) {
       this._skip = n;
@@ -7867,7 +7374,7 @@
      * Sets the limit of the number of results to return. The default limit is
      * 100, with a maximum of 1000 results being returned at a time.
      * @param {Number} n the number of results to limit to.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     limit: function(n) {
       this._limit = n;
@@ -7878,15 +7385,11 @@
      * Add a constraint to the query that requires a particular key's value to
      * be equal to the provided value.
      * @param {String} key The key to check.
-     * @param value The value that the Parse.Object must contain.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @param value The value that the AV.Object must contain.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     equalTo: function(key, value) {
-      if (_.isUndefined(value)) {
-        return this.doesNotExist(key);
-      } 
-
-      this._where[key] = Parse._encode(value);
+      this._where[key] = AV._encode(value);
       return this;
     },
 
@@ -7898,7 +7401,7 @@
       if (!this._where[key]) {
         this._where[key] = {};
       }
-      this._where[key][condition] = Parse._encode(value);
+      this._where[key][condition] = AV._encode(value);
       return this;
     },
 
@@ -7907,7 +7410,7 @@
      * be not equal to the provided value.
      * @param {String} key The key to check.
      * @param value The value that must not be equalled.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     notEqualTo: function(key, value) {
       this._addCondition(key, "$ne", value);
@@ -7919,7 +7422,7 @@
      * be less than the provided value.
      * @param {String} key The key to check.
      * @param value The value that provides an upper bound.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     lessThan: function(key, value) {
       this._addCondition(key, "$lt", value);
@@ -7931,7 +7434,7 @@
      * be greater than the provided value.
      * @param {String} key The key to check.
      * @param value The value that provides an lower bound.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     greaterThan: function(key, value) {
       this._addCondition(key, "$gt", value);
@@ -7943,7 +7446,7 @@
      * be less than or equal to the provided value.
      * @param {String} key The key to check.
      * @param value The value that provides an upper bound.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     lessThanOrEqualTo: function(key, value) {
       this._addCondition(key, "$lte", value);
@@ -7955,7 +7458,7 @@
      * be greater than or equal to the provided value.
      * @param {String} key The key to check.
      * @param value The value that provides an lower bound.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     greaterThanOrEqualTo: function(key, value) {
       this._addCondition(key, "$gte", value);
@@ -7967,7 +7470,7 @@
      * be contained in the provided list of values.
      * @param {String} key The key to check.
      * @param {Array} values The values that will match.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     containedIn: function(key, values) {
       this._addCondition(key, "$in", values);
@@ -7979,7 +7482,7 @@
      * not be contained in the provided list of values.
      * @param {String} key The key to check.
      * @param {Array} values The values that will not match.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     notContainedIn: function(key, values) {
       this._addCondition(key, "$nin", values);
@@ -7991,7 +7494,7 @@
      * contain each one of the provided list of values.
      * @param {String} key The key to check.  This key's value must be an array.
      * @param {Array} values The values that will match.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     containsAll: function(key, values) {
       this._addCondition(key, "$all", values);
@@ -8002,7 +7505,7 @@
     /**
      * Add a constraint for finding objects that contain the given key.
      * @param {String} key The key that should exist.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     exists: function(key) {
       this._addCondition(key, "$exists", true);
@@ -8012,7 +7515,7 @@
     /**
      * Add a constraint for finding objects that do not contain a given key.
      * @param {String} key The key that should not exist
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     doesNotExist: function(key) {
       this._addCondition(key, "$exists", false);
@@ -8025,12 +7528,12 @@
      * This may be slow for large datasets.
      * @param {String} key The key that the string to match is stored in.
      * @param {RegExp} regex The regular expression pattern to match.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     matches: function(key, regex, modifiers) {
       this._addCondition(key, "$regex", regex);
       if (!modifiers) { modifiers = ""; }
-      // Javascript regex options support mig as inline options but store them 
+      // Javascript regex options support mig as inline options but store them
       // as properties of the object. We support mi & should migrate them to
       // modifiers
       if (regex.ignoreCase) { modifiers += 'i'; }
@@ -8043,12 +7546,12 @@
     },
 
     /**
-     * Add a constraint that requires that a key's value matches a Parse.Query
+     * Add a constraint that requires that a key's value matches a AV.Query
      * constraint.
      * @param {String} key The key that the contains the object to match the
      *                     query.
-     * @param {Parse.Query} query The query that should match.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @param {AV.Query} query The query that should match.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     matchesQuery: function(key, query) {
       var queryJSON = query.toJSON();
@@ -8059,11 +7562,11 @@
 
    /**
      * Add a constraint that requires that a key's value not matches a
-     * Parse.Query constraint.
+     * AV.Query constraint.
      * @param {String} key The key that the contains the object to match the
      *                     query.
-     * @param {Parse.Query} query The query that should not match.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @param {AV.Query} query The query that should not match.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     doesNotMatchQuery: function(key, query) {
       var queryJSON = query.toJSON();
@@ -8075,13 +7578,13 @@
 
     /**
      * Add a constraint that requires that a key's value matches a value in
-     * an object returned by a different Parse.Query.
+     * an object returned by a different AV.Query.
      * @param {String} key The key that contains the value that is being
      *                     matched.
      * @param {String} queryKey The key in the objects returned by the query to
      *                          match against.
-     * @param {Parse.Query} query The query to run.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @param {AV.Query} query The query to run.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     matchesKeyInQuery: function(key, queryKey, query) {
       var queryJSON = query.toJSON();
@@ -8093,13 +7596,13 @@
 
     /**
      * Add a constraint that requires that a key's value not match a value in
-     * an object returned by a different Parse.Query.
+     * an object returned by a different AV.Query.
      * @param {String} key The key that contains the value that is being
      *                     excluded.
      * @param {String} queryKey The key in the objects returned by the query to
      *                          match against.
-     * @param {Parse.Query} query The query to run.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @param {AV.Query} query The query to run.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     doesNotMatchKeyInQuery: function(key, queryKey, query) {
       var queryJSON = query.toJSON();
@@ -8112,7 +7615,7 @@
     /**
      * Add constraint that at least one of the passed in queries matches.
      * @param {Array} queries
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     _orQuery: function(queries) {
       var queryJSON = _.map(queries, function(q) {
@@ -8137,7 +7640,7 @@
      * string.  This may be slow for large datasets.
      * @param {String} key The key that the string to match is stored in.
      * @param {String} substring The substring that the value must contain.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     contains: function(key, value) {
       this._addCondition(key, "$regex", this._quote(value));
@@ -8150,7 +7653,7 @@
      * for large datasets.
      * @param {String} key The key that the string to match is stored in.
      * @param {String} prefix The substring that the value must start with.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     startsWith: function(key, value) {
       this._addCondition(key, "$regex", "^" + this._quote(value));
@@ -8162,7 +7665,7 @@
      * string.  This will be slow for large datasets.
      * @param {String} key The key that the string to match is stored in.
      * @param {String} suffix The substring that the value must end with.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     endsWith: function(key, value) {
       this._addCondition(key, "$regex", this._quote(value) + "$");
@@ -8171,85 +7674,37 @@
 
     /**
      * Sorts the results in ascending order by the given key.
-     * 
-     * @param {(String|String[]|...String} key The key to order by, which is a 
-     * string of comma separated values, or an Array of keys, or multiple keys.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     *
+     * @param {String} key The key to order by.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
-    ascending: function() {
-      this._order = [];
-      return this.addAscending.apply(this, arguments);
-    },
-
-    /**
-     * Sorts the results in ascending order by the given key, 
-     * but can also add secondary sort descriptors without overwriting _order.
-     * 
-     * @param {(String|String[]|...String} key The key to order by, which is a
-     * string of comma separated values, or an Array of keys, or multiple keys.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
-     */
-    addAscending: function(key) {
-      var self = this; 
-      if (!this._order) {
-        this._order = [];
-      }
-      Parse._arrayEach(arguments, function(key) {
-        if (Array.isArray(key)) {
-          key = key.join();
-        }
-        self._order = self._order.concat(key.replace(/\s/g, "").split(","));
-      });
+    ascending: function(key) {
+      this._order = key;
       return this;
     },
 
     /**
      * Sorts the results in descending order by the given key.
-     * 
-     * @param {(String|String[]|...String} key The key to order by, which is a
-     * string of comma separated values, or an Array of keys, or multiple keys.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     *
+     * @param {String} key The key to order by.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     descending: function(key) {
-      this._order = [];
-      return this.addDescending.apply(this, arguments);
-    },
-
-    /**
-     * Sorts the results in descending order by the given key,
-     * but can also add secondary sort descriptors without overwriting _order.
-     * 
-     * @param {(String|String[]|...String} key The key to order by, which is a
-     * string of comma separated values, or an Array of keys, or multiple keys.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
-     */
-    addDescending: function(key) {
-      var self = this; 
-      if (!this._order) {
-        this._order = [];
-      }
-      Parse._arrayEach(arguments, function(key) {
-        if (Array.isArray(key)) {
-          key = key.join();
-        }
-        self._order = self._order.concat(
-          _.map(key.replace(/\s/g, "").split(","), 
-            function(k) { return "-" + k; }));
-      });
+      this._order = "-" + key;
       return this;
     },
 
     /**
      * Add a proximity based constraint for finding objects with key point
      * values near the point given.
-     * @param {String} key The key that the Parse.GeoPoint is stored in.
-     * @param {Parse.GeoPoint} point The reference Parse.GeoPoint that is used.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @param {String} key The key that the AV.GeoPoint is stored in.
+     * @param {AV.GeoPoint} point The reference AV.GeoPoint that is used.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     near: function(key, point) {
-      if (!(point instanceof Parse.GeoPoint)) {
+      if (!(point instanceof AV.GeoPoint)) {
         // Try to cast it to a GeoPoint, so that near("loc", [20,30]) works.
-        point = new Parse.GeoPoint(point);
+        point = new AV.GeoPoint(point);
       }
       this._addCondition(key, "$nearSphere", point);
       return this;
@@ -8258,11 +7713,10 @@
     /**
      * Add a proximity based constraint for finding objects with key point
      * values near the point given and within the maximum distance given.
-     * @param {String} key The key that the Parse.GeoPoint is stored in.
-     * @param {Parse.GeoPoint} point The reference Parse.GeoPoint that is used.
-     * @param {Number} maxDistance Maximum distance (in radians) of results to
-     *   return.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @param {String} key The key that the AV.GeoPoint is stored in.
+     * @param {AV.GeoPoint} point The reference AV.GeoPoint that is used.
+     * @param maxDistance Maximum distance (in radians) of results to return.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     withinRadians: function(key, point, distance) {
       this.near(key, point);
@@ -8274,11 +7728,11 @@
      * Add a proximity based constraint for finding objects with key point
      * values near the point given and within the maximum distance given.
      * Radius of earth used is 3958.8 miles.
-     * @param {String} key The key that the Parse.GeoPoint is stored in.
-     * @param {Parse.GeoPoint} point The reference Parse.GeoPoint that is used.
+     * @param {String} key The key that the AV.GeoPoint is stored in.
+     * @param {AV.GeoPoint} point The reference AV.GeoPoint that is used.
      * @param {Number} maxDistance Maximum distance (in miles) of results to
      *     return.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     withinMiles: function(key, point, distance) {
       return this.withinRadians(key, point, distance / 3958.8);
@@ -8288,11 +7742,11 @@
      * Add a proximity based constraint for finding objects with key point
      * values near the point given and within the maximum distance given.
      * Radius of earth used is 6371.0 kilometers.
-     * @param {String} key The key that the Parse.GeoPoint is stored in.
-     * @param {Parse.GeoPoint} point The reference Parse.GeoPoint that is used.
+     * @param {String} key The key that the AV.GeoPoint is stored in.
+     * @param {AV.GeoPoint} point The reference AV.GeoPoint that is used.
      * @param {Number} maxDistance Maximum distance (in kilometers) of results
      *     to return.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     withinKilometers: function(key, point, distance) {
       return this.withinRadians(key, point, distance / 6371.0);
@@ -8303,32 +7757,32 @@
      * coordinates be contained within a given rectangular geographic bounding
      * box.
      * @param {String} key The key to be constrained.
-     * @param {Parse.GeoPoint} southwest
+     * @param {AV.GeoPoint} southwest
      *     The lower-left inclusive corner of the box.
-     * @param {Parse.GeoPoint} northeast
+     * @param {AV.GeoPoint} northeast
      *     The upper-right inclusive corner of the box.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     withinGeoBox: function(key, southwest, northeast) {
-      if (!(southwest instanceof Parse.GeoPoint)) {
-        southwest = new Parse.GeoPoint(southwest);
+      if (!(southwest instanceof AV.GeoPoint)) {
+        southwest = new AV.GeoPoint(southwest);
       }
-      if (!(northeast instanceof Parse.GeoPoint)) {
-        northeast = new Parse.GeoPoint(northeast);
+      if (!(northeast instanceof AV.GeoPoint)) {
+        northeast = new AV.GeoPoint(northeast);
       }
       this._addCondition(key, '$within', { '$box': [southwest, northeast] });
       return this;
     },
 
     /**
-     * Include nested Parse.Objects for the provided key.  You can use dot
+     * Include nested AV.Objects for the provided key.  You can use dot
      * notation to specify which fields in the included object are also fetch.
      * @param {String} key The name of the key to include.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     include: function() {
       var self = this;
-      Parse._arrayEach(arguments, function(key) {
+      AV._arrayEach(arguments, function(key) {
         if (_.isArray(key)) {
           self._include = self._include.concat(key);
         } else {
@@ -8339,16 +7793,16 @@
     },
 
     /**
-     * Restrict the fields of the returned Parse.Objects to include only the
+     * Restrict the fields of the returned AV.Objects to include only the
      * provided keys.  If this is called multiple times, then all of the keys
      * specified in each of the calls will be included.
      * @param {Array} keys The names of the keys to include.
-     * @return {Parse.Query} Returns the query, so you can chain this call.
+     * @return {AV.Query} Returns the query, so you can chain this call.
      */
     select: function() {
       var self = this;
       this._select = this._select || [];
-      Parse._arrayEach(arguments, function(key) {
+      AV._arrayEach(arguments, function(key) {
         if (_.isArray(key)) {
           self._select = self._select.concat(key);
         } else {
@@ -8365,12 +7819,12 @@
      * promise, then iteration will stop with that error. The items are
      * processed in an unspecified order. The query may not have any sort order,
      * and may not use limit or skip.
-     * @param {Function} callback Callback that will be called with each result
+     * @param callback {Function} Callback that will be called with each result
      *     of the query.
-     * @param {Object} options An optional Backbone-like options object with
+     * @param options {Object} An optional Backbone-like options object with
      *     success and error callbacks that will be invoked once the iteration
      *     has finished.
-     * @return {Parse.Promise} A promise that will be fulfilled once the
+     * @return {AV.Promise} A promise that will be fulfilled once the
      *     iteration has completed.
      */
     each: function(callback, options) {
@@ -8379,12 +7833,12 @@
       if (this._order || this._skip || (this._limit >= 0)) {
         var error =
           "Cannot iterate on a query with sort, skip, or limit.";
-        return Parse.Promise.error(error)._thenRunCallbacks(options);
+        return AV.Promise.error(error)._thenRunCallbacks(options);
       }
 
-      var promise = new Parse.Promise();
+      var promise = new AV.Promise();
 
-      var query = new Parse.Query(this.objectClass);
+      var query = new AV.Query(this.objectClass);
       // We can override the batch size from the options.
       // This is undocumented, but useful for testing.
       query._limit = options.batchSize || 100;
@@ -8394,13 +7848,13 @@
       query.ascending('objectId');
 
       var finished = false;
-      return Parse.Promise._continueWhile(function() {
+      return AV.Promise._continueWhile(function() {
         return !finished;
 
       }, function() {
         return query.find().then(function(results) {
-          var callbacksDone = Parse.Promise.as();
-          Parse._.each(results, function(result) {
+          var callbacksDone = AV.Promise.as();
+          AV._.each(results, function(result) {
             callbacksDone = callbacksDone.then(function() {
               return callback(result);
             });
@@ -8418,13 +7872,27 @@
     }
   };
 
+   AV.FriendShipQuery = AV.Query._extend({
+     _objectClass: AV.User,
+     _newObject: function(){
+      return new AV.User();
+    },
+     _processResult: function(json){
+      var user = json[this._friendshipTag];
+      if(user.__type === 'Pointer' && user.className === '_User'){
+        delete user.__type;
+        delete user.className;
+      }
+      return user;
+    },
+   });
 }(this));
 
 /*global FB: false , console: false*/
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   var PUBLIC_KEY = "*";
 
@@ -8458,7 +7926,7 @@
         var authResponse = {
           userID: authData.id,
           accessToken: authData.access_token,
-          expiresIn: (Parse._parseDate(authData.expiration_date).getTime() -
+          expiresIn: (AV._parseDate(authData.expiration_date).getTime() -
               (new Date()).getTime()) / 1000
         };
         var newOptions = _.clone(initOptions);
@@ -8466,17 +7934,6 @@
 
         // Suppress checks for login status from the browser.
         newOptions.status = false;
-
-        // If the user doesn't match the one known by the FB SDK, log out.
-        // Most of the time, the users will match -- it's only in cases where
-        // the FB SDK knows of a different user than the one being restored
-        // from a Parse User that logged in with username/password.
-        var existingResponse = FB.getAuthResponse();
-        if (existingResponse &&
-            existingResponse.userID !== authResponse.userID) {
-          FB.logout();
-        }
-
         FB.init(newOptions);
       }
       return true;
@@ -8486,53 +7943,54 @@
     },
     deauthenticate: function() {
       this.restoreAuthentication(null);
+      FB.logout();
     }
   };
 
   /**
-   * Provides a set of utilities for using Parse with Facebook.
+   * Provides a set of utilities for using AV with Facebook.
    * @namespace
-   * Provides a set of utilities for using Parse with Facebook.
+   * Provides a set of utilities for using AV with Facebook.
    */
-  Parse.FacebookUtils = {
+  AV.FacebookUtils = {
     /**
-     * Initializes Parse Facebook integration.  Call this function after you
+     * Initializes AV Facebook integration.  Call this function after you
      * have loaded the Facebook Javascript SDK with the same parameters
      * as you would pass to<code>
      * <a href=
      * "https://developers.facebook.com/docs/reference/javascript/FB.init/">
-     * FB.init()</a></code>.  Parse.FacebookUtils will invoke FB.init() for you
+     * FB.init()</a></code>.  AV.FacebookUtils will invoke FB.init() for you
      * with these arguments.
      *
      * @param {Object} options Facebook options argument as described here:
      *   <a href=
      *   "https://developers.facebook.com/docs/reference/javascript/FB.init/">
      *   FB.init()</a>. The status flag will be coerced to 'false' because it
-     *   interferes with Parse Facebook integration. Call FB.getLoginStatus()
+     *   interferes with AV Facebook integration. Call FB.getLoginStatus()
      *   explicitly if this behavior is required by your application.
      */
     init: function(options) {
       if (typeof(FB) === 'undefined') {
         throw "The Facebook JavaScript SDK must be loaded before calling init.";
-      } 
+      }
       initOptions = _.clone(options) || {};
       if (initOptions.status && typeof(console) !== "undefined") {
         var warn = console.warn || console.log || function() {};
         warn.call(console, "The 'status' flag passed into" +
-          " FB.init, when set to true, can interfere with Parse Facebook" +
+          " FB.init, when set to true, can interfere with AV Facebook" +
           " integration, so it has been suppressed. Please call" +
           " FB.getLoginStatus() explicitly if you require this behavior.");
       }
       initOptions.status = false;
       FB.init(initOptions);
-      Parse.User._registerAuthenticationProvider(provider);
+      AV.User._registerAuthenticationProvider(provider);
       initialized = true;
     },
 
     /**
      * Gets whether the user has their account linked to Facebook.
-     * 
-     * @param {Parse.User} user User to check for a facebook link.
+     *
+     * @param {AV.User} user User to check for a facebook link.
      *     The user must be logged in on this device.
      * @return {Boolean} <code>true</code> if the user has their account
      *     linked to Facebook.
@@ -8544,8 +8002,8 @@
     /**
      * Logs in a user using Facebook. This method delegates to the Facebook
      * SDK to authenticate the user, and then automatically logs in (or
-     * creates, in the case where it is a new user) a Parse.User.
-     * 
+     * creates, in the case where it is a new user) a AV.User.
+     *
      * @param {String, Object} permissions The permissions required for Facebook
      *    log in.  This is a comma-separated string of permissions.
      *    Alternatively, supply a Facebook authData object as described in our
@@ -8560,23 +8018,23 @@
           throw "You must initialize FacebookUtils before calling logIn.";
         }
         requestedPermissions = permissions;
-        return Parse.User._logInWith("facebook", options);
+        return AV.User._logInWith("facebook", options);
       } else {
         var newOptions = _.clone(options) || {};
         newOptions.authData = permissions;
-        return Parse.User._logInWith("facebook", newOptions);
+        return AV.User._logInWith("facebook", newOptions);
       }
     },
 
     /**
      * Links Facebook to an existing PFUser. This method delegates to the
      * Facebook SDK to authenticate the user, and then automatically links
-     * the account to the Parse.User.
+     * the account to the AV.User.
      *
-     * @param {Parse.User} user User to link to Facebook. This must be the
+     * @param {AV.User} user User to link to Facebook. This must be the
      *     current user.
      * @param {String, Object} permissions The permissions required for Facebook
-     *    log in.  This is a comma-separated string of permissions. 
+     *    log in.  This is a comma-separated string of permissions.
      *    Alternatively, supply a Facebook authData object as described in our
      *    REST API docs if you want to handle getting facebook auth tokens
      *    yourself.
@@ -8598,9 +8056,9 @@
     },
 
     /**
-     * Unlinks the Parse.User from a Facebook account. 
-     * 
-     * @param {Parse.User} user User to unlink from Facebook. This must be the
+     * Unlinks the AV.User from a Facebook account.
+     *
+     * @param {AV.User} user User to unlink from Facebook. This must be the
      *     current user.
      * @param {Object} options Standard options object with success and error
      *    callbacks.
@@ -8612,32 +8070,32 @@
       return user._unlinkFrom("facebook", options);
     }
   };
-  
+
 }(this));
 
 /*global _: false, document: false, window: false, navigator: false */
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * History serves as a global router (per frame) to handle hashchange
    * events or pushState, match the appropriate route, and trigger
    * callbacks. You shouldn't ever have to create one of these yourself
-   * — you should use the reference to <code>Parse.history</code>
-   * that will be created for you automatically if you make use of 
+   * — you should use the reference to <code>AV.history</code>
+   * that will be created for you automatically if you make use of
    * Routers with routes.
    * @class
-   *   
-   * <p>A fork of Backbone.History, provided for your convenience.  If you 
-   * use this class, you must also include jQuery, or another library 
+   *
+   * <p>A fork of Backbone.History, provided for your convenience.  If you
+   * use this class, you must also include jQuery, or another library
    * that provides a jQuery-compatible $ function.  For more information,
    * see the <a href="http://documentcloud.github.com/backbone/#History">
    * Backbone documentation</a>.</p>
    * <p><strong><em>Available in the client SDK only.</em></strong></p>
    */
-  Parse.History = function() {
+  AV.History = function() {
     this.handlers = [];
     _.bindAll(this, 'checkUrl');
   };
@@ -8649,11 +8107,11 @@
   var isExplorer = /msie [\w.]+/;
 
   // Has the history handling already been started?
-  Parse.History.started = false;
+  AV.History.started = false;
 
-  // Set up all inheritable **Parse.History** properties and methods.
-  _.extend(Parse.History.prototype, Parse.Events,
-           /** @lends Parse.History.prototype */ {
+  // Set up all inheritable **AV.History** properties and methods.
+  _.extend(AV.History.prototype, AV.Events,
+           /** @lends AV.History.prototype */ {
 
     // The default interval to poll for hash changes, if necessary, is
     // twenty times a second.
@@ -8670,7 +8128,7 @@
     // Get the cross-browser normalized URL fragment, either from the URL,
     // the hash, or the override.
     getFragment: function(fragment, forcePushState) {
-      if (Parse._isNullOrUndefined(fragment)) {
+      if (AV._isNullOrUndefined(fragment)) {
         if (this._hasPushState || forcePushState) {
           fragment = window.location.pathname;
           var search = window.location.search;
@@ -8692,17 +8150,17 @@
      * URL matches an existing route, and `false` otherwise.
      */
     start: function(options) {
-      if (Parse.History.started) {
-        throw new Error("Parse.history has already been started");
+      if (AV.History.started) {
+        throw new Error("AV.history has already been started");
       }
-      Parse.History.started = true;
+      AV.History.started = true;
 
       // Figure out the initial configuration. Do we need an iframe?
       // Is pushState desired ... is it available?
       this.options = _.extend({}, {root: '/'}, this.options, options);
       this._wantsHashChange = this.options.hashChange !== false;
       this._wantsPushState = !!this.options.pushState;
-      this._hasPushState = !!(this.options.pushState && 
+      this._hasPushState = !!(this.options.pushState &&
                               window.history &&
                               window.history.pushState);
       var fragment = this.getFragment();
@@ -8711,7 +8169,7 @@
                    (!docMode || docMode <= 7));
 
       if (oldIE) {
-        this.iframe = Parse.$('<iframe src="javascript:0" tabindex="-1" />')
+        this.iframe = AV.$('<iframe src="javascript:0" tabindex="-1" />')
                       .hide().appendTo('body')[0].contentWindow;
         this.navigate(fragment);
       }
@@ -8719,11 +8177,11 @@
       // Depending on whether we're using pushState or hashes, and whether
       // 'onhashchange' is supported, determine how we check the URL state.
       if (this._hasPushState) {
-        Parse.$(window).bind('popstate', this.checkUrl);
+        AV.$(window).bind('popstate', this.checkUrl);
       } else if (this._wantsHashChange &&
                  ('onhashchange' in window) &&
                  !oldIE) {
-        Parse.$(window).bind('hashchange', this.checkUrl);
+        AV.$(window).bind('hashchange', this.checkUrl);
       } else if (this._wantsHashChange) {
         this._checkUrlInterval = window.setInterval(this.checkUrl,
                                                     this.interval);
@@ -8737,8 +8195,8 @@
 
       // If we've started off with a route from a `pushState`-enabled browser,
       // but we're currently in a browser that doesn't support it...
-      if (this._wantsHashChange && 
-          this._wantsPushState && 
+      if (this._wantsHashChange &&
+          this._wantsPushState &&
           !this._hasPushState &&
           !atRoot) {
         this.fragment = this.getFragment(null, true);
@@ -8749,7 +8207,7 @@
       // Or if we've started out with a hash-based route, but we're currently
       // in a browser where it could be `pushState`-based instead...
       } else if (this._wantsPushState &&
-                 this._hasPushState && 
+                 this._hasPushState &&
                  atRoot &&
                  loc.hash) {
         this.fragment = this.getHash().replace(routeStripper, '');
@@ -8762,13 +8220,13 @@
       }
     },
 
-    // Disable Parse.history, perhaps temporarily. Not useful in a real app,
+    // Disable AV.history, perhaps temporarily. Not useful in a real app,
     // but possibly useful for unit testing Routers.
     stop: function() {
-      Parse.$(window).unbind('popstate', this.checkUrl)
+      AV.$(window).unbind('popstate', this.checkUrl)
                      .unbind('hashchange', this.checkUrl);
       window.clearInterval(this._checkUrlInterval);
-      Parse.History.started = false;
+      AV.History.started = false;
     },
 
     // Add a route to be tested when the fragment changes. Routes added later
@@ -8818,7 +8276,7 @@
     // you wish to modify the current URL without adding an entry to the
     // history.
     navigate: function(fragment, options) {
-      if (!Parse.History.started) {
+      if (!AV.History.started) {
         return false;
       }
       if (!options || options === true) {
@@ -8879,9 +8337,9 @@
 
 /*global _: false*/
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * Routers map faux-URLs to actions, and fire events when routes are
@@ -8894,7 +8352,7 @@
    * documentation</a>.</p>
    * <p><strong><em>Available in the client SDK only.</em></strong></p>
    */
-  Parse.Router = function(options) {
+  AV.Router = function(options) {
     options = options || {};
     if (options.routes) {
       this.routes = options.routes;
@@ -8909,9 +8367,9 @@
   var splatParam    = /\*\w+/g;
   var escapeRegExp  = /[\-\[\]{}()+?.,\\\^\$\|#\s]/g;
 
-  // Set up all inheritable **Parse.Router** properties and methods.
-  _.extend(Parse.Router.prototype, Parse.Events,
-           /** @lends Parse.Router.prototype */ {
+  // Set up all inheritable **AV.Router** properties and methods.
+  _.extend(AV.Router.prototype, AV.Events,
+           /** @lends AV.Router.prototype */ {
 
     /**
      * Initialize is an empty function by default. Override it with your own
@@ -8927,20 +8385,20 @@
      *     });</pre>
      */
     route: function(route, name, callback) {
-      Parse.history = Parse.history || new Parse.History();
+      AV.history = AV.history || new AV.History();
       if (!_.isRegExp(route)) {
         route = this._routeToRegExp(route);
-      } 
+      }
       if (!callback) {
         callback = this[name];
       }
-      Parse.history.route(route, _.bind(function(fragment) {
+      AV.history.route(route, _.bind(function(fragment) {
         var args = this._extractParameters(route, fragment);
         if (callback) {
           callback.apply(this, args);
         }
         this.trigger.apply(this, ['route:' + name].concat(args));
-        Parse.history.trigger('route', this, name, args);
+        AV.history.trigger('route', this, name, args);
       }, this));
       return this;
     },
@@ -8948,20 +8406,20 @@
     /**
      * Whenever you reach a point in your application that you'd
      * like to save as a URL, call navigate in order to update the
-     * URL. If you wish to also call the route function, set the 
+     * URL. If you wish to also call the route function, set the
      * trigger option to true. To update the URL without creating
      * an entry in the browser's history, set the replace option
      * to true.
      */
     navigate: function(fragment, options) {
-      Parse.history.navigate(fragment, options);
+      AV.history.navigate(fragment, options);
     },
 
-    // Bind all defined routes to `Parse.history`. We have to reverse the
+    // Bind all defined routes to `AV.history`. We have to reverse the
     // order of the routes here to support behavior where the most general
     // routes can be defined at the bottom of the route map.
     _bindRoutes: function() {
-      if (!this.routes) { 
+      if (!this.routes) {
         return;
       }
       var routes = [];
@@ -8995,14 +8453,14 @@
    * @function
    * @param {Object} instanceProps Instance properties for the router.
    * @param {Object} classProps Class properies for the router.
-   * @return {Class} A new subclass of <code>Parse.Router</code>.
+   * @return {Class} A new subclass of <code>AV.Router</code>.
    */
-  Parse.Router.extend = Parse._extend;
+  AV.Router.extend = AV._extend;
 }(this));
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
-  var _ = Parse._;
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
 
   /**
    * @namespace Contains functions for calling and declaring
@@ -9011,9 +8469,9 @@
    *   Some functions are only available from Cloud Code.
    * </em></strong></p>
    */
-  Parse.Cloud = Parse.Cloud || {};
+  AV.Cloud = AV.Cloud || {};
 
-  _.extend(Parse.Cloud, /** @lends Parse.Cloud */ {
+  _.extend(AV.Cloud, /** @lends AV.Cloud */ {
     /**
      * Makes a call to a cloud function.
      * @param {String} name The function name.
@@ -9023,39 +8481,32 @@
      * call to a cloud function.  options.error should be a function that
      * handles an error running the cloud function.  Both functions are
      * optional.  Both functions take a single argument.
-     * @return {Parse.Promise} A promise that will be resolved with the result
+     * @return {AV.Promise} A promise that will be resolved with the result
      * of the function.
      */
     run: function(name, data, options) {
-      options = options || {};
-
-      var request = Parse._request({
-        route: "functions",
-        className: name,
-        method: 'POST',
-        useMasterKey: options.useMasterKey,
-        data: Parse._encode(data, null, true)
-      });
+      var request = AV._request("functions", name, null, 'POST',
+                                   AV._encode(data, null, true));
 
       return request.then(function(resp) {
-        return Parse._decode(null, resp).result;
+        return AV._decode(null, resp).result;
       })._thenRunCallbacks(options);
     }
   });
 }(this));
 
 (function(root) {
-  root.Parse = root.Parse || {};
-  var Parse = root.Parse;
+  root.AV = root.AV || {};
+  var AV = root.AV;
 
-  Parse.Installation = Parse.Object.extend("_Installation");
+  AV.Installation = AV.Object.extend("_Installation");
 
   /**
-   * Contains functions to deal with Push in Parse
-   * @name Parse.Push
+   * Contains functions to deal with Push in AV
+   * @name AV.Push
    * @namespace
    */
-  Parse.Push = Parse.Push || {};
+  AV.Push = AV.Push || {};
 
   /**
    * Sends a push notification.
@@ -9067,18 +8518,16 @@
    *     <li>expiration_time -  A Date object for when to expire
    *         the push.</li>
    *     <li>expiration_interval - The seconds from now to expire the push.</li>
-   *     <li>where - A Parse.Query over Parse.Installation that is used to match
+   *     <li>where - A AV.Query over AV.Installation that is used to match
    *         a set of installations to push to.</li>
    *     <li>data - The data to send as part of the push</li>
    *   <ol>
    * @param {Object} options An object that has an optional success function,
    * that takes no arguments and will be called on a successful push, and
-   * an error function that takes a Parse.Error and will be called if the push
+   * an error function that takes a AV.Error and will be called if the push
    * failed.
    */
-  Parse.Push.send = function(data, options) {
-    options = options || {};
-
+  AV.Push.send = function(data, options) {
     if (data.where) {
       data.where = data.where.toJSON().where;
     }
@@ -9091,16 +8540,384 @@
       data.expiration_time = data.expiration_time.toJSON();
     }
 
-    if (data.expiration_time && data.expiration_interval) {
-      throw "Both expiration_time and expiration_interval can't be set";
+    if (data.expiration_time && data.expiration_time_interval) {
+      throw "Both expiration_time and expiration_time_interval can't be set";
     }
 
-    var request = Parse._request({
-      route: 'push',
-      method: 'POST',
-      data: data,
-      useMasterKey: options.useMasterKey
-    });
+    var request = AV._request('push', null, null, 'POST', data);
     return request._thenRunCallbacks(options);
   };
+}(this));
+
+(function(root) {
+  root.AV = root.AV || {};
+  var AV = root.AV;
+  var _ = AV._;
+
+
+  /**
+   * Contains functions to deal with Status in AVOS Cloud.
+   * @name AV.Status
+   * @namespace
+   */
+  AV.Status = function(imageUrl, message) {
+    this.data = {};
+    this.inboxType = 'default';
+    this.query = null;
+    if(imageUrl && typeof imageUrl == 'object') {
+        this.data = imageUrl;
+    } else {
+      if(imageUrl){
+        this.data.image = imageUrl;
+      }
+      if(message){
+        this.data.message = message;
+      }
+    }
+    return this;
+  };
+
+  AV.Status.prototype = {
+    /**
+     * Gets the value of an attribute in status data.
+     * @param {String} attr The string name of an attribute.
+     */
+    get: function(attr){
+      return this.data[attr];
+    },
+    /**
+     * Sets a hash of model attributes on the status data.
+     * @param {String} key The key to set.
+     * @param {} value The value to give it.
+     */
+    set: function(key, value){
+      this.data[key] = value;
+      return this;
+    },
+    /**
+     * Destroy this status,then it will not be avaiable in other user's inboxes.
+     * @param {Object} options An optional Backbone-like options object with
+     *     success and error callbacks that will be invoked once the iteration
+     *     has finished.
+     * @return {AV.Promise} A promise that is fulfilled when the destroy
+     *     completes.
+     */
+    destroy: function(options){
+      if(!this.id)
+          return;
+      var request = AV._request("statuses", null, this.id, 'DELETE');
+      return request._thenRunCallbacks(options);
+    },
+    /**
+      * Cast the AV.Status object to an AV.Object pointer.
+      * @return {AV.Object} A AV.Object pointer.
+      */
+    toObject: function(){
+      if(!this.id)
+          return null;
+      return AV.Object.createWithoutData('_Status', this.id);
+    },
+   /**
+    * Send  a status by a AV.Query object.
+    * <p>For example,send a status to male users:<br/><pre>
+    *     var status = new AVStatus('image url', 'a message');
+    *     status.query = new AV.Query('_User');
+    *     status.query.equalTo('gender', 'male');
+    *     status.send().then(function(){
+    *              //send status successfully.
+    *      }, function(err){
+    *             //an error threw.
+    *             console.dir(err);
+    *      });
+    * </pre></p>
+    * @since 0.3.0
+    * @param {Object} options An optional Backbone-like options object with
+    *     success and error callbacks that will be invoked once the iteration
+    *     has finished.
+    * @return {AV.Promise} A promise that is fulfilled when the send
+    *     completes.
+    */
+    send: function(options){
+      if(!AV.User.current()){
+        throw 'Please signin an user.';
+      }
+      if(!this.query){
+        return AV.Status.sendStatusToFollowers(this, options);
+      }
+
+      var query = this.query.toJSON();
+      query.className = this.query.className;
+      var data = {};
+      data.query = query;
+      this.data = this.data || {};
+      var currUser =  AV.Object.createWithoutData('_User', AV.User.current().id)._toPointer();
+      this.data.source =  this.data.source || currUser;
+      data.data = this.data;
+      data.inboxType = status.inboxType || 'default';
+
+      var request = AV._request('statuses', null, null, 'POST', data);
+      var self = this;
+      return request.then(function(response){
+        self.id = response.objectId;
+        self.createdAt = AV._parseDate(response.createdAt);
+        return self;
+      })._thenRunCallbacks(options);
+    },
+
+    _finishFetch: function(data){
+        this.id = data.objectId;
+        this.createdAt = AV._parseDate(data.createdAt);
+        this.updatedAt = AV._parseDate(data.updatedAt);
+        this.messageId = data.messageId;
+        delete data.messageId;
+        delete data.objectId;
+        delete data.createdAt;
+        delete data.updatedAt;
+        this.data = data;
+    }
+  };
+
+  /**
+   * Send  a status to current signined user's followers.For example:
+   * <p><pre>
+   *     var status = new AVStatus('image url', 'a message');
+   *     AV.Status.sendStatusToFollowers(status).then(function(){
+   *              //send status successfully.
+   *      }, function(err){
+   *             //an error threw.
+   *             console.dir(err);
+   *      });
+   * </pre></p>
+   * @since 0.3.0
+   * @param {AV.Status} status  A status object to be send to followers.
+   * @param {Object} options An optional Backbone-like options object with
+   *     success and error callbacks that will be invoked once the iteration
+   *     has finished.
+   * @return {AV.Promise} A promise that is fulfilled when the send
+   *     completes.
+   */
+  AV.Status.sendStatusToFollowers = function(status, options) {
+    if(!AV.User.current()){
+      throw 'Please signin an user.';
+    }
+    var query = {};
+    query.className = '_Follower';
+    query.keys = 'follower';
+    var currUser =  AV.Object.createWithoutData('_User', AV.User.current().id). _toPointer();
+    query.where = {user: currUser};
+    var data = {};
+    data.query = query;
+    status.data = status.data || {};
+    status.data.source =  status.data.source || currUser;
+    data.data = status.data;
+    data.inboxType = status.inboxType || 'default';
+
+    var request = AV._request('statuses', null, null, 'POST', data);
+    return request.then(function(response){
+      status.id = response.objectId;
+      status.createdAt = AV._parseDate(response.createdAt);
+      return status;
+    })._thenRunCallbacks(options);
+  };
+
+  /**
+   * <p>Send  a status from current signined user to other user's private status inbox.</p>
+   * <p>For example,send a private status to user '52e84e47e4b0f8de283b079b':<br/>
+   * <pre>
+   *    var status = new AVStatus('image url', 'a message');
+   *     AV.Status.sendPrivateStatus(status, '52e84e47e4b0f8de283b079b').then(function(){
+   *              //send status successfully.
+   *      }, function(err){
+   *             //an error threw.
+   *             console.dir(err);
+   *      });
+   * </pre></p>
+   * @since 0.3.0
+   * @param {AV.Status} status  A status object to be send to followers.
+   * @param {} target The target user or user's objectId.
+   * @param {Object} options An optional Backbone-like options object with
+   *     success and error callbacks that will be invoked once the iteration
+   *     has finished.
+   * @return {AV.Promise} A promise that is fulfilled when the send
+   *     completes.
+   */
+  AV.Status.sendPrivateStatus = function(status, target, options) {
+    if(!AV.User.current()){
+      throw 'Please signin an user.';
+    }
+    if(!target){
+          throw "Invalid target user.";
+    }
+    var userObjectId = (typeof target === 'string') ? target: target.id;
+    if(!userObjectId){
+        throw "Invalid target user.";
+    }
+
+    var query = {};
+    query.className = '_User';
+    var currUser =  AV.Object.createWithoutData('_User', AV.User.current().id). _toPointer();
+    query.where = {objectId: userObjectId};
+    var data = {};
+    data.query = query;
+    status.data = status.data || {};
+    status.data.source =  status.data.source || currUser;
+    data.data = status.data;
+    data.inboxType = 'private';
+    status.inboxType = 'private';
+
+    var request = AV._request('statuses', null, null, 'POST', data);
+    return request.then(function(response){
+      status.id = response.objectId;
+      status.createdAt = AV._parseDate(response.createdAt);
+      return status;
+    })._thenRunCallbacks(options);
+  };
+
+  /**
+   * Count unread statuses in someone's inbox.For example:<br/>
+   * <p><pre>
+   *  AV.Status.countUnreadStatuses(AV.User.current()).then(function(response){
+   *    console.log(response.unread); //unread statuses number.
+   *    console.log(response.total);  //total statuses number.
+   *  });
+   * </pre></p>
+   * @since 0.3.0
+   * @param {Object} source The status source.
+   * @return {AV.Query} The query object for status.
+   * @return {AV.Promise} A promise that is fulfilled when the count
+   *     completes.
+   */
+  AV.Status.countUnreadStatuses = function(owner){
+    if(!AV.User.current() && owner == null){
+      throw 'Please signin an user or pass the owner objectId.';
+    }
+    owner = owner || AV.User.current();
+    var options = (typeof arguments[1] !== 'string') ? arguments[1] : arguments[2];
+    var inboxType =  (typeof arguments[1] !== 'string') ? 'default' : arguments[1];
+    var params = {};
+    params.inboxType = AV._encode(inboxType);
+    params.owner = AV._encode(owner);
+    var request = AV._request('subscribe/statuses/count', null, null, 'GET', params);
+    return request._thenRunCallbacks(options);
+  };
+
+  /**
+   * Create a status query to find someone's published statuses.For example:<br/>
+   * <p><pre>
+   *   //Find current user's published statuses.
+   *   var query = AV.Status.statusQuery(AV.User.current());
+   *   query.find().then(function(statuses){
+   *      //process statuses
+   *   });
+   * </pre></p>
+   * @since 0.3.0
+   * @param {Object} source The status source.
+   * @return {AV.Query} The query object for status.
+   */
+  AV.Status.statusQuery = function(source){
+    var query = new AV.Query('_Status');
+    if(source){
+      query.equalTo('source', source);
+    }
+    return query;
+  };
+
+   /**
+    * <p>AV.InboxQuery defines a query that is used to fetch somebody's inbox statuses.</p>
+    * @see AV.Status#inboxQuery
+    * @class
+    */
+   AV.InboxQuery = AV.Query._extend(/** @lends AV.InboxQuery.prototype */{
+     _objectClass: AV.Status,
+     _sinceId: 0,
+     _maxId:  0,
+     _inboxType: 'default',
+     _owner: null,
+     _newObject: function(){
+      return new AV.Status();
+    },
+    _createRequest: function(params){
+      return AV._request("subscribe/statuses", null, null, "GET",
+                                   params || this.toJSON());
+    },
+
+
+    /**
+     * Sets the messageId of results to skip before returning any results.
+     * This is useful for pagination.
+     * Default is zero.
+     * @param {Number} n the mesage id.
+     * @return {AV.InboxQuery} Returns the query, so you can chain this call.
+     */
+    sinceId: function(id){
+      this._sinceId = id;
+      return this;
+    },
+    /**
+     * Sets the maximal messageId of results。
+     * This is useful for pagination.
+     * Default is zero that is no limition.
+     * @param {Number} n the mesage id.
+     * @return {AV.InboxQuery} Returns the query, so you can chain this call.
+     */
+    maxId: function(id){
+      this._maxId = id;
+      return this;
+    },
+    /**
+     * Sets the owner of the querying inbox.
+     * @param {Object} owner The inbox owner.
+     * @return {AV.InboxQuery} Returns the query, so you can chain this call.
+     */
+    owner: function(owner){
+      this._owner = owner;
+      return this;
+    },
+    /**
+     * Sets the querying inbox type.default is 'default'.
+     * @param {Object} owner The inbox type.
+     * @return {AV.InboxQuery} Returns the query, so you can chain this call.
+     */
+    inboxType: function(type){
+      this._inboxType = type;
+      return this;
+    },
+    toJSON: function(){
+      var params = AV.InboxQuery.__super__.toJSON.call(this);
+      params.owner = AV._encode(this._owner);
+      params.inboxType = AV._encode(this._inboxType);
+      params.sinceId = AV._encode(this._sinceId);
+      params.maxId = AV._encode(this._maxId);
+      return params;
+    }
+   });
+
+  /**
+   * Create a inbox status query to find someone's inbox statuses.For example:<br/>
+   * <p><pre>
+   *   //Find current user's default inbox statuses.
+   *   var query = AV.Status.inboxQuery(AV.User.current());
+   *   //find the statuses after the last message id
+   *   query.sinceId(lastMessageId);
+   *   query.find().then(function(statuses){
+   *      //process statuses
+   *   });
+   * </pre></p>
+   * @since 0.3.0
+   * @param {Object} owner The inbox's owner
+   * @param {String} inboxType The inbox type,'default' by default.
+   * @return {AV.InboxQuery} The inbox query object.
+   * @see AV.InboxQuery
+   */
+  AV.Status.inboxQuery = function(owner, inboxType){
+    var query = new AV.InboxQuery(AV.Status);
+    if(owner){
+      query._owner = owner;
+    }
+    if(inboxType){
+      query._inboxType = inboxType;
+    }
+    return query;
+  };
+
 }(this));
